@@ -1,6 +1,7 @@
 acpiview
 actionlint
 allowlisting
+allowlist
 apiKey
 args
 async

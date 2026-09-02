@@ -7,7 +7,7 @@ Core operational rules, system boundaries, and execution guardrails for autonomo
 ## 1. System Context & Target Platform
 
 - **Hardware Target**: NVIDIA Jetson Orin Nano (4 GB, 8 GB) and Jetson Orin NX (8 GB, 16 GB).
-- **Firmware Stack**: TianoCore EDK II build, UEFI Spec 2.70, Shell v2.2 (Level 3 Interactive, 71 compiled commands).
+- **Firmware Stack**: TianoCore EDK II build, UEFI Spec 2.70, Shell v2.2 (Level 3 Interactive, 71 compiled commands; JetPack 7.2 / 7.2.1, L4T r39.2.1 baseline).
 - **Firmware Storage**: Onboard QSPI-NOR flash holds the primary UEFI firmware volumes (`uefi_jetson.bin`) and non-volatile EFI variables (NVRAM).
 - **Boot Topology**:
   - Primary OS storage: PCIe M.2 NVMe SSD (typical: 16-partition L4T GPT layout).
@@ -72,4 +72,4 @@ When asked to diagnose or resolve a boot failure, select tools according to this
 
 - All bash scripts must use `set -euo pipefail`.
 - All python scripts must be standalone, using standard library modules only (no unpinned pip dependencies).
-- Documentation updates must pass Vale style linting (`vale <file.md>`) using `.vale.ini`.
+- Documentation updates must pass Vale style linting (`vale <file.md>`) using `.vale.ini` and style configurations under `.vale/`.

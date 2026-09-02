@@ -8,7 +8,7 @@
 # to disk — critical on SD-card systems with <10GB free.
 #
 # Usage: bash fetch-uefi-firmware.sh [version] [outdir]
-#   version: L4T release (default: r39.2.1 — the firmware on nano1)
+#   version: L4T release (default: r39.2.1 / JetPack 7.2.1 — the firmware on nano1)
 #   outdir:  extraction target (default: /tmp/uefi_fw_<version>)
 
 set -euo pipefail

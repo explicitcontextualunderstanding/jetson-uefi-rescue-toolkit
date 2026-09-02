@@ -89,7 +89,7 @@ Shell> dmpstore -d Boot000A
 
   `bcfg` directly updates the NVRAM `BootOrder` and `BootXXXX` structures without requiring the graphical setup utility.
 
-- **NVRAM Write Protection & Persistence Caveat**: While `bcfg` and `setvar` are present in the Level 3 shell inventory, certain NVIDIA TianoCore EDK2 builds (specifically stock JetPack r36.x and r39.x releases) restrict writing directly to underlying SPI-NOR NVRAM variables when Secure Boot or variable locks are active.
+- **NVRAM Write Protection & Persistence Caveat**: While `bcfg` and `setvar` are present in the Level 3 shell inventory, certain NVIDIA TianoCore EDK2 builds (specifically stock JetPack 6.x / r36.x and JetPack 7.2 / 7.2.1 / r39.x releases) restrict writing directly to underlying SPI-NOR NVRAM variables when Secure Boot or variable locks are active.
   - If `setvar` returns `EFI_WRITE_PROTECTED` or silently drops modifications across a cold power cycle, fall back to clearing **OS chain A status** via the ESC graphical setup menu or performing a host-side recovery flash (`l4t_initrd_flash.sh`).
 
 ---
@@ -344,8 +344,8 @@ NVIDIA default boot order: USB > NVMe > eMMC > SD > UFS (removable media first).
 ---
 
 ## Quick Reference
-
-**Verified on nano1's build (JetPack r39.2.1, UEFI Shell v2.2 EDK II) via `help -b`:**
+ 
+**Verified on nano1's build (JetPack 7.2.1 / r39.2.1, UEFI Shell v2.2 EDK II) via `help -b`:**
 This is a FULL UEFI Shell 2.2 Interactive build—71 commands. Nothing is
 "stripped down." The complete alphabetical inventory lives in the Reference
 section at the end of this document.
@@ -397,7 +397,7 @@ older versions of this document—without running `help` yourself.
 
 ---
 
-## Reference: Verified Command Inventory (nano1, JetPack r39.2.1)
+## Reference: Verified Command Inventory (nano1, JetPack 7.2.1 / r39.2.1)
 
 Captured from `help -b` at the `Shell>` prompt on nano1 (Aug 28, 2026).
 UEFI Interactive Shell v2.2, EDK II, UEFI v2.70 (EDK II). This is a full

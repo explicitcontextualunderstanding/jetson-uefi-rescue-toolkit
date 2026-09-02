@@ -69,6 +69,8 @@ Shell> fs0:\boot-kernel-stub.nsh fs2: PARTUUID=<your-rootfs-uuid>
 jetson-uefi-rescue-toolkit/
 ├── README.md                           # Main repo introduction & quick start
 ├── AGENTS.md                           # Operational directives & invariants for AI agents
+├── .vale.ini                           # Vale style and technical prose configuration
+├── .vale/                              # Custom styles (Google, proselint) & Fleet vocabulary
 ├── docs/
 │   └── uefi-rescue-shell-tutorial.md   # Full human-readable technical tutorial
 ├── .agents/
@@ -116,17 +118,24 @@ sudo python3 ./host/check_esp_pe_binaries.py /dev/sdX1
 ## Supported Hardware & Firmware
 
 - **Platforms:** NVIDIA Jetson Orin Nano (4 GB, 8 GB), Jetson Orin NX (8 GB, 16 GB)
-- **JetPack / L4T Releases:** JetPack 5.x, 6.x (L4T r35.x, r36.x, r39.x)
+- **JetPack / L4T Releases:** JetPack 7.2 / 7.2.1 (L4T r39.2.1; primary tested baseline), JetPack 6.x (L4T r36.x), JetPack 5.x (L4T r35.x)
 - **Firmware Environment:** TianoCore EDK II / UEFI Shell v2.2 (Level 3 Interactive build, 71 commands)
 
 ---
 
 ## Contributing & Style Standards
 
-Documentation in this repository is strictly linted using **Vale** against Google Developer Style and technical systems thresholds:
+Documentation in this repository is strictly linted using **Vale** against Google Developer Style and technical systems thresholds. The linter and vocabulary configurations are located at:
+
+- [`.vale.ini`](.vale.ini)—Core Vale configuration specifying alert thresholds, packages, and rule overrides.
+- [`.vale/styles/config/vocabularies/Fleet/accept.txt`](.vale/styles/config/vocabularies/Fleet/accept.txt)—Fleet technical vocabulary and term allowlist for Jetson firmware.
+- [`.vale/styles/Google/`](.vale/styles/Google/)—Google Developer Documentation style rules.
+- [`.vale/styles/proselint/`](.vale/styles/proselint/)—Proselint prose quality rules.
+
+Run Vale across repository documentation:
 
 ```bash
-vale docs/uefi-rescue-shell-tutorial.md README.md
+vale docs/uefi-rescue-shell-tutorial.md README.md AGENTS.md .agents/skills/jetson-uefi-recovery/SKILL.md
 ```
 
 ---
