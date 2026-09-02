@@ -19,16 +19,15 @@ USB_DEV="${1:-/dev/sda}"
 ESP_DEV="${2:-}"
 
 # Source ISO for extracting files
-SOURCE_ISO="${SOURCE_ISO:-/mnt/nvme/workspace/jetsoninstaller-r39.2.1-bpb-fixed-arm64.iso}"
-# Prefer the patched ISO if available
-if [[ -f /tmp/jetsoninstaller-r39.2.1-patched-full-v6.iso ]]; then
-    SOURCE_ISO="/tmp/jetsoninstaller-r39.2.1-patched-full-v6.iso"
+SOURCE_ISO="${SOURCE_ISO:-}"
+if [[ -z "$SOURCE_ISO" || ! -f "$SOURCE_ISO" ]]; then
+    for cand in /tmp/*.iso ./*.iso; do
+        if [[ -f "$cand" ]]; then
+            SOURCE_ISO="$cand"
+            break
+        fi
+    done
 fi
-
-# ESP partition path relative to USB device (default: first partition)
-ESP_PART="${3:-${USB_DEV}1}"
-# ISO partition path (second partition)
-ISO_PART="${4:-${USB_DEV}2}"
 
 echo "=== Staging FAT32 ESP for UEFI Boot ==="
 echo "USB Device: $USB_DEV"
@@ -185,17 +184,21 @@ ISO_CFG="$ISO_MNT/boot/grub/grub.cfg"
 KERNEL_LINE="$(grep -m1 'linux /casper/Image' "$ISO_CFG" 2>/dev/null | sed 's/^[[:space:]]*//' || true)"
 INITRD_LINE="$(grep -m1 'initrd /casper' "$ISO_CFG" 2>/dev/null | sed 's/^[[:space:]]*//' || true)"
 
-# Append nano1-specific params if the ISO config lacks them
+# Append rootdelay and optional EXTRA_CMDLINE parameters
+EXTRA_CMDLINE="${EXTRA_CMDLINE:-}"
 if [[ -n "$KERNEL_LINE" && "$KERNEL_LINE" != *rootdelay=* ]]; then
     KERNEL_LINE="$KERNEL_LINE rootdelay=120"
 fi
-if [[ -n "$KERNEL_LINE" && "$KERNEL_LINE" != *ip=192.168.100.2* ]]; then
-    KERNEL_LINE="$KERNEL_LINE ip=192.168.100.2::192.168.100.1:255.255.255.0:nano1:enP8p1s0:off::1.1.1.1"
+if [[ -n "$EXTRA_CMDLINE" ]]; then
+    KERNEL_LINE="$KERNEL_LINE $EXTRA_CMDLINE"
 fi
 # Fallback if the ISO config had no recognizable kernel line
 if [[ -z "$KERNEL_LINE" ]]; then
     echo "  [WARN] No kernel line found in ISO grub.cfg — using fallback entry"
-    KERNEL_LINE="linux /casper/Image boot=casper rootdelay=120 ip=192.168.100.2::192.168.100.1:255.255.255.0:nano1:enP8p1s0:off::1.1.1.1"
+    KERNEL_LINE="linux /casper/Image boot=casper rootdelay=120 console=ttyTCU0,115200 console=tty0"
+    if [[ -n "$EXTRA_CMDLINE" ]]; then
+        KERNEL_LINE="$KERNEL_LINE $EXTRA_CMDLINE"
+    fi
     INITRD_LINE="initrd /casper/initrd"
 fi
 echo "  ESP kernel line: $KERNEL_LINE"

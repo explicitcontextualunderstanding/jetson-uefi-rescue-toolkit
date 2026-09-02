@@ -17,7 +17,7 @@ Don't panic. The Jetson UEFI shell is not a stripped-down stub—it is a full In
 
 ## 1. UEFI Shell: Low-Level Firmware & NVRAM Variable Recovery
 
-Use the UEFI Shell when the system cannot hand off control to a bootloader or when hardware-level non-volatile RAM (NVRAM) wedges or corrupts (grounded in [`52-nano1-recovery.md`](plans/52-nano1-recovery.md)). When the UEFI graphical setup menu (invoked via ESC) freezes, fails to render, or refuses to save configuration changes to NVRAM, the shell provides direct, command-line control over firmware variables, hardware mappings, and boot execution.
+Use the UEFI Shell when the system cannot hand off control to a bootloader or when hardware-level non-volatile RAM (NVRAM) wedges or corrupts (grounded in empirical field recovery benchmarks on Orin Nano). When the UEFI graphical setup menu (invoked via ESC) freezes, fails to render, or refuses to save configuration changes to NVRAM, the shell provides direct, command-line control over firmware variables, hardware mappings, and boot execution.
 
 ### Mapping ESP File System Artifacts
 
@@ -43,7 +43,7 @@ Shell> map -r
   ```
 
 - **Resolving Enumeration Shifts**:
-  1. Inspect the `HD(PartitionIndex, GPT, <GUID>)` substring in the device path. UEFI outputs partition GUIDs using standard mixed-endian hex formatting, which generally matches host `blkid` outputs directly (e.g., `target_esp_uuid` in [`52-nano1-recovery.md`](plans/52-nano1-recovery.md)).
+  1. Inspect the `HD(PartitionIndex, GPT, <GUID>)` substring in the device path. UEFI outputs partition GUIDs using standard mixed-endian hex formatting, which generally matches host `blkid` outputs directly (for example, the target ESP partition UUID recorded during triage).
   2. Use `vol <handle>:` (for example, `Shell> vol fs3:`) or check the partition index as a fast secondary confirmation to verify volume labels without deciphering raw GUID substrings.
   3. Note the mapped handle (for example, `FS3:` versus `FS0:`). Never assume an ESP is always `FS0:` or `FS1:`. On nano1, `FS0:` and `FS1:` were internal firmware/memory volumes, `FS2:` was a legacy read-only ESP, and the active ESP resided on `FS3:` (or `FS4:` when USB-attached).
 
@@ -64,7 +64,7 @@ Shell> dmpstore -s fs3:\nvram_backup.txt
 
 - **Targeted Querying**: Query standard variables such as `BootOrder` (the active 16-bit boot selection sequence) and `OsIndications` (flags for OS-to-firmware handoff, capsule updates, or setup transitions).
 - **NVIDIA A/B Variables**: Query L4T redundancy variables such as `RootfsStatusSlotA` and `RootfsStatusSlotB`. If slot A has failed its boot retry budget, the firmware marks it unbootable in NVRAM.
-- **Avoid the Redirect Pitfall**: As proven in [`52-nano1-recovery.md`](plans/52-nano1-recovery.md), executing `dmpstore > file.txt` fails with _"No matching variables found"_ if the path syntax fails or the directory does not exist. Always use native export syntax: `dmpstore -s fsX:\filename.txt` (or ensure backslashes in existing paths: `dmpstore > fsX:\tmp\vars.txt`).
+- **Avoid the Redirect Pitfall**: In testing on Orin Nano firmware builds, executing `dmpstore > file.txt` fails with _"No matching variables found"_ if the path syntax fails or the directory does not exist. Always use native export syntax: `dmpstore -s fsX:\filename.txt` (or ensure backslashes in existing paths: `dmpstore > fsX:\tmp\vars.txt`).
 
 #### 2. Clearing Locked Variables & Modifying Boot Configuration (`setvar`, `bcfg`)
 
@@ -96,7 +96,7 @@ Shell> dmpstore -d Boot000A
 
 ### Bypassing Corrupted Bootloaders
 
-When standard bootloaders panic, hang, or fall back to missing recovery targets (for instance, when NVIDIA's `L4TLauncher` panics with `Android image header not seen. Failed to boot recovery:1 partition from fs3: EFI/BOOT/BOOTAA64.efi` as recorded in [`52-nano1-recovery.md`](plans/52-nano1-recovery.md)), you do not need to wait for a full system re-flash. You can bypass the corrupted launcher directly from the shell.
+When standard bootloaders panic, hang, or fall back to missing recovery targets (for instance, when NVIDIA's `L4TLauncher` panics with `Android image header not seen. Failed to boot recovery:1 partition from fs3: EFI/BOOT/BOOTAA64.efi` as recorded during recovery runs), you do not need to wait for a full system re-flash. You can bypass the corrupted launcher directly from the shell.
 
 #### Option A: Direct Kernel Execution via EFI Stub
 
@@ -307,7 +307,7 @@ mkdir fs2:\tmp
 dmpstore > fs2:\tmp\dmpstore_log.txt  # backslashes, existing directory
 ```
 
-_*Filtering to a specific GUID (e.g. global vars: Boot*, Platform_):**
+**Filtering to a specific GUID (for example, global vars: Boot*, Platform*):**
 
 ```
 dmpstore -g 8be4df61-93ca-11d2-aa0d-00e098032b8c
@@ -377,11 +377,11 @@ older versions of this document—without running `help` yourself.
 
 ## Sources
 
-**Fleet territory & empirical plans:**
+**Fleet recovery benchmarks & runbooks:**
 
-- Plan 52—nano1 recovery, §LoadImage refusal and reset experiment, §Falsification matrix, §Esc-mash fix: `shared-knowledge/plans/52-nano1-recovery.md`
-- Plan 112—UEFI Menu recovery, nvbootctrl methodology: `isaac_ros_custom/.claude/plans/112-nano1-recovery-and-fleet-hardening.md`
-- Skill: `jetson-nvme-recovery`—references/uefi-shell-fallback.md, references/grub-rescue-terminal-helpers.md
+- Field recovery benchmark: Orin Nano recovery runbook (LoadImage refusal, NVRAM reset experiments, and ESC-recovery sequence)
+- Fleet hardening runbook: UEFI Menu recovery and nvbootctrl A/B slot redundancy methodology
+- Skill: `jetson-uefi-recovery`—automated recipes, diagnostic ladder, and UEFI Shell fallbacks
 
 **NVIDIA official:**
 

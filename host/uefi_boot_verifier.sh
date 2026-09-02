@@ -172,7 +172,8 @@ if [[ "$ISO_MODE" == "true" ]]; then
 else
 PART_TYPE=$(lsblk -dno PARTTYPE "$ESP_DEV" 2>/dev/null || true)
 EXPECTED="c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
-if [[ "${PART_TYPE,,}" == "$EXPECTED" ]]; then
+PART_TYPE_LOWER=$(echo "$PART_TYPE" | tr '[:upper:]' '[:lower:]')
+if [[ "$PART_TYPE_LOWER" == "$EXPECTED" ]]; then
     check_pass "EFI System Partition type correct"
 else
     check_fail "Wrong partition type: '$PART_TYPE'"
@@ -580,13 +581,12 @@ echo "=== Check 4b: ISO9660 Boot Files ==="
 ISO_MOUNT=$(mktemp -d /tmp/iso_check.XXXXXX)
 # In ISO mode, mount the raw device (loop) instead of a partition
 MOUNT_TARGET="$ISO_DEV"
+MOUNT_OPTS=()
 if [[ "$ISO_MODE" == "true" ]]; then
-    MOUNT_FLAGS="-o loop,ro"
+    MOUNT_OPTS=(-o "loop,ro")
     check_pass "Using loop mount for hybrid ISO ($MOUNT_TARGET)"
-else
-    MOUNT_FLAGS=""
 fi
-if sudo -n mount $MOUNT_FLAGS "$MOUNT_TARGET" "$ISO_MOUNT" 2>/dev/null; then
+if sudo -n mount "${MOUNT_OPTS[@]}" "$MOUNT_TARGET" "$ISO_MOUNT" 2>/dev/null; then
     if [[ -f "$ISO_MOUNT/boot/grub/grub.cfg" ]]; then
         check_pass "grub.cfg found at /boot/grub/ on ISO9660"
     elif [[ -f "$ISO_MOUNT/grub/grub.cfg" ]]; then
@@ -1072,7 +1072,7 @@ if [[ -x "$(command -v efibootmgr)" ]]; then
         check_skip "No USB/EFI boot entry found in THIS machine's NVRAM (expected when running on nano2 — boot entry lives in nano1's NVRAM)"
         echo "  Current BootOrder: $BOOT_ORDER"
         echo "  Run on nano1 to create entry:"
-        echo "    sudo efibootmgr -c -L "USB Installer" -l "\\EFI\\BOOT\\BOOTAA64.EFI" -d $DEV -p 2"
+        echo "    sudo efibootmgr -c -L \"USB Installer\" -l \"\\EFI\\BOOT\\BOOTAA64.EFI\" -d $DEV -p 2"
         echo "  NOTE: This check examines THIS machine's NVRAM. If you're on nano2,"
         echo "  the boot entry lives in nano1's NVRAM where Boot0001=USB SanDisk is"
         echo "  already first in BootOrder. This is environmental, not a defect."
