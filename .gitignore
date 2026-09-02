@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary and extraction directories
+/tmp/
+*.bin
+*.tbz2
+*.iso
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.raw
+*.img
+
+# Logs and outputs
+*.log
+*.out
+probe_out.txt
+
+# OS metadata
+.DS_Store
+Thumbs.db
