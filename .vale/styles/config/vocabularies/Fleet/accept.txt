@@ -168,6 +168,7 @@ parallelization
 params
 PARTUUID
 pci
+PCIe
 PciRoot
 PE/COFF
 peer_id
@@ -231,6 +232,8 @@ Tegra
 Tegras
 templated
 tftp
+thumbdrive
+thumbdrives
 TianoCore
 Toolchain
 toolchain
