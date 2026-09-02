@@ -61,6 +61,7 @@ drvdiag
 DTB
 Dtb
 dtb
+EDID
 EDK2
 EDKII
 EEPROM
@@ -68,6 +69,8 @@ EFI
 efi
 eficompress
 efidecompress
+EFISTUB
+efivarfs
 endfor
 endif
 Env
@@ -131,6 +134,7 @@ Kimi
 kube
 kubeconfig
 kubectl
+kyberpunk
 L4T
 L4TLauncher
 L4tLauncher
@@ -142,6 +146,7 @@ markdownlint
 MBR
 mcpServers
 memmap
+minicom
 MemoryMapped
 mkdir
 monorepo
@@ -161,6 +166,8 @@ nvbootctrl
 NVMe
 nvme
 openinfo
+onboarding
+Onboarding
 OPi
 OPi3
 oras
@@ -168,6 +175,7 @@ Orin
 parallelization
 params
 PARTUUID
+picocom
 pci
 PCIe
 PciRoot
@@ -238,14 +246,20 @@ thumbdrives
 TianoCore
 Toolchain
 toolchain
+ttyTCU0
+ttyUSB
+ttyUSB0
 U-Boot
 u-boot
 Unbootable
 unbootable
 unbuffered
+unformatted
 unparseable
+unpowered
 untracked
 URIs
+usbmodem
 UUID
 uv
 Validator
