@@ -7,7 +7,7 @@ Core operational rules, system boundaries, and execution guardrails for autonomo
 ## 1. System Context & Target Platform
 
 - **Hardware Target**: NVIDIA Jetson Orin Nano (4 GB, 8 GB) and Jetson Orin NX (8 GB, 16 GB).
-- **Release Scope: JetPack 7.2.x (L4T r39.2.x) only. Procedures for JetPack 6.x or earlier, and for legacy T210 hardware, are out of scope and must not be added to this repository.
+- *\Release Scope\*: JetPack 7.2.x (L4T r39.2.x) only. Procedures for JetPack 6.x or earlier, and for legacy T210 hardware, are out of scope and must not be added to this repository.
 - **Firmware Stack**: TianoCore EDK II build, UEFI Spec 2.70, Shell v2.2 (Level 3 Interactive, 71 compiled commands; JetPack 7.2 / 7.2.1, L4T r39.2.1 baseline).
 - **Firmware Storage**: Onboard QSPI-NOR flash holds the primary UEFI firmware volumes (`uefi_jetson.bin`) and non-volatile EFI variables (NVRAM).
 - **Boot Topology**:
