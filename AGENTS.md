@@ -44,7 +44,7 @@ Agents generating code or instructing users on recovery commands MUST strictly a
 
 ### Rule 6: Never Ask for Sudo Passwords
 - The agent must never prompt for or accept a sudo password through any channel (chat, file, environment variable).
-- When a command requires root privileges (e.g. raw block device access or `mount`), present the command in a fenced code block and instruct the user to execute it directly in their terminal.
+- When a command requires root privileges (for example, raw block device access or `mount`), present the command in a fenced code block and instruct the user to execute it directly in their terminal.
 
 ---
 

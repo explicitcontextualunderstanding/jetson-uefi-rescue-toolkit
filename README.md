@@ -34,7 +34,7 @@ Refresh hardware mappings to discover your block devices and readable filesystem
 Shell> map -r
 Shell> map -fs
 ```
-*Note: `FSx:` are readable FAT partitions; `BLKx:` are raw block devices or unreadable filesystems (e.g., ext4, ISO9660).*
+*Note: `FSx:` are readable FAT partitions; `BLKx:` are raw block devices or unreadable filesystems (such as ext4 or ISO9660).*
 
 ### 2. Auto-Recovery or Probe
 If using a USB rescue stick prepared with this toolkit, run:
