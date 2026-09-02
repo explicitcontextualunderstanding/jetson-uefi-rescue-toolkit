@@ -15,6 +15,25 @@ Don't panic. The Jetson UEFI shell is not a stripped-down stub—it is a full In
 
 ---
 
+## Scope and Platform Baseline (JetPack 7.2.x Only)
+
+This tutorial targets **one platform generation**: the NVIDIA Jetson Orin Nano (Tegra234) running **JetPack 7.2.x (Jetson Linux / L4T r39.2.x)** on the Ubuntu 24.04 LTS, Linux kernel 6.8, CUDA 13 baseline. The original Jetson Nano (T210), Xavier-era platforms, and JetPack 6.x (r36.x) or earlier firmware are out of scope: their boot chains, recovery artifacts, and pre-boot shells differ, and procedures written for them do not transfer to this baseline.
+
+Relative to JetPack 6.x, the JetPack 7 platform reset changes what a recovery runbook must assume:
+
+- **arm64-SBSA alignment**: JetPack 7 aligns Orin with the standard Arm server ecosystem, so the platform runs mainstream arm64-SBSA containers and binaries without Jetson-specific rebuilds.
+- **Unified ISO installer**: JetPack 7 introduces a unified, UEFI-bootable installer ISO for Orin developer kits. Recovery installs boot the ISO from USB through the UEFI Boot Manager and target onboard NVMe storage. The standalone SD-card-image flow from earlier releases is retired on this baseline.
+- **Super profile**: JetPack 7.2.x configures the Orin Nano Developer Kit with the `jetson-orin-nano-devkit-super` board configuration by default (MaxN Super compute profile). Host-side reflash commands must name the super board config:
+
+  ```bash
+  sudo ./l4t_initrd_flash.sh --erase-all jetson-orin-nano-devkit-super internal
+  ```
+
+- **PCN module revisions**: modules built under PCN 211461 / 211462 require firmware with PCN support, introduced in L4T r36.4.0 and carried in r39.2.x. Newer module revisions flashed with older QSPI firmware can hang at boot or drop to the UEFI Shell.
+- **Kernel 6.8 recovery artifacts**: when a recovery-kernel fallback leaves a damaged `/boot/initrd` or kernel DTB, source replacements from the matching r39.2.x distribution. Artifacts built for JetPack 5/6 kernels (5.10/5.15) fail on the JetPack 7 QSPI firmware (the HSP mailbox protocol changed between JetPack 6 and JetPack 7).
+
+---
+
 ## Tier 1: Fast-Path & Beginner Onboarding (The 5-Minute Triage)
 
 If you are new to Jetson firmware or single-board computer debugging, start here. This tier establishes physical access, tests the quickest non-destructive recovery path, and guides you through basic shell commands and automated scripts.
@@ -74,6 +93,9 @@ You can clear this quarantine in 30 seconds using the graphical UEFI menu:
 │     L4T Boot Mode:      [ExtLinux]     <-- Set ExtLinux │
 └────────────────────────────────────────────────────────┘
 ```
+
+> [!TIP]
+> Recent firmware builds prompt `ESC to enter Setup` and `F11 to enter Boot Manager Menu` on the landing page. Press **ESC** to enter Setup, or press **F11** to go straight to the Boot Manager Menu and select a boot device without entering Setup. If the display shows the older `Press ESCAPE for boot options` string, **ESC** alone reaches Setup.
 
 - **If this works**: The system clears its quarantine flag and boots into Ubuntu normally.
 - **If this fails**: If the menu freezes, drops keyboard input, or refuses to save settings (indicating locked NVRAM variables), reboot into the shell, and proceed to basic navigation below.
@@ -439,7 +461,9 @@ VenHw(1E5A432C-...)/MemoryMapped(0xB,0x14160000,0x1417FFFF)/PciRoot(0x0)/Pci(0x0
 - Validated test cases: `LoadImage` refusal triage, NVRAM write-protection behavior, and ESC recovery sequencing.
 
 **Official NVIDIA Documentation**:
-- [NVIDIA UEFI Bootloader Adaptation Guide](https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/Bootloader/UEFI.html)
+- [NVIDIA UEFI Bootloader Adaptation Guide (r39.2)](https://docs.nvidia.com/jetson/archives/r39.2/DeveloperGuide/SD/Bootloader/UEFI.html)
+- [Jetson Linux r36.4.0 release (introduces PCN 211461 / 211462 module support)](https://developer.nvidia.com/embedded/jetson-linux-r3640)
+- [JetPack 7.2 announcement (unified ISO installer, Ubuntu 24.04, kernel 6.8, CUDA 13, arm64-SBSA)](https://forums.developer.nvidia.com/t/jetpack-7-2-jetson-software-goes-agentic-with-jetson-linux-39-2/372060)
 - [NVIDIA edk2-nvidia Build Configuration Repository](https://github.com/NVIDIA/edk2-nvidia/blob/main/Platform/NVIDIA/Kconfig)
 
 **Community References**:

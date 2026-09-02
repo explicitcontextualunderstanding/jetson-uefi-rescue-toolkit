@@ -118,7 +118,7 @@ sudo python3 ./host/check_esp_pe_binaries.py /dev/sdX1
 ## Supported Hardware & Firmware
 
 - **Platforms:** NVIDIA Jetson Orin Nano (4 GB, 8 GB), Jetson Orin NX (8 GB, 16 GB)
-- **JetPack / L4T Releases:** JetPack 7.2 / 7.2.1 (L4T r39.2.1; primary tested baseline), JetPack 6.x (L4T r36.x), JetPack 5.x (L4T r35.x)
+- **JetPack / L4T Releases:** JetPack 7.2.x (L4T r39.2.x) only. JetPack 6.x and earlier, and legacy T210 hardware, are out of scope.
 - **Firmware Environment:** TianoCore EDK II / UEFI Shell v2.2 (Level 3 Interactive build, 71 commands)
 
 ---
