@@ -187,12 +187,15 @@ peer_id
 pg_trgm
 pgvector
 ping6
+pinout
+pinouts
 Podman
 postinst
 preprocess
 Prereqs
 Prisma
 protobuf
+Proventus
 Proventusnova
 Pyright
 pyright
@@ -252,6 +255,9 @@ thumbdrives
 TianoCore
 Toolchain
 toolchain
+Toolkit
+toolkit
+toolkit's
 ttyTCU0
 ttyUSB
 ttyUSB0
@@ -275,6 +281,8 @@ venv
 ver
 vmlinuz
 wakeonlan
+Walkthrough
+walkthrough
 Walkthroughs
 XSkill
 yamllint

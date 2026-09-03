@@ -67,6 +67,8 @@ screen /dev/ttyUSB0 115200
 screen /dev/cu.usbmodem* 115200
 ```
 
+For adapter wiring technique (3.3V TTL, cross-wired TXD/RXD, no power lead), see the [JetsonHacks serial console walkthrough](https://jetsonhacks.com/2019/04/19/jetson-nano-serial-console/) in [docs/references.md](references.md).
+
 > [!TIP]
 > **Keyboard Tip**: If using a direct USB keyboard plugged into the Jetson, plug it directly into the carrier board rather than an unpowered USB hub to prevent initialization delays during early boot. If arrow keys produce escape characters (`^[[A`) over serial, ensure your terminal emulator sends standard ANSI sequences.
 
@@ -285,6 +287,8 @@ Shell> fs3:\EFI\BOOT\grubaa64.efi
 
 A `grub.cfg` file sitting next to `grubaa64.efi` ensures GRUB loads its configuration even when it cannot read secondary ISO9660 or ext4 partitions directly.
 
+The five root causes behind UEFI Shell drops (QSPI mismatch, missing DTB, ODMDATA conflict, PKC verification, A/B exhaustion) are analyzed in the [Proventus Nova recovery analysis](https://proventusnova.com/blog/jetson-uefi-shell-assertion-boot-recovery), and the launcher fallback order above is documented in the [L4TLauncher source](https://github.com/NVIDIA/edk2-nvidia/blob/main/Silicon/NVIDIA/Application/L4TLauncher/L4TLauncher.c). Both are cataloged in [docs/references.md](references.md).
+
 ---
 
 ### 2. When the Firmware Refuses a Valid Binary (`EFI_UNSUPPORTED`)
@@ -382,6 +386,8 @@ Shell> dmpstore -d Boot000A
 > [!CAUTION]
 > **NVRAM Write Protection Caveat**: Certain NVIDIA TianoCore EDK2 builds (specifically stock JetPack 6.x / r36.x and JetPack 7.2 / 7.2.1 / r39.x) restrict writing directly to underlying SPI-NOR NVRAM when Secure Boot or variable locks are active. If `setvar` returns `EFI_WRITE_PROTECTED` or drops changes after power-cycling, clear the quarantine via the ESC setup menu or perform a host-side recovery flash (`l4t_initrd_flash.sh`).
 
+The NVIDIA variable schemas used here (`RootfsStatusSlotA`/`RootfsStatusSlotB`, `L4TDefaultBootMode`, GUID `781e084c-a330-417c-b678-38e696380cb9`) and the efivarfs restoration procedure are documented in the [UEFI Adaptation guide (r39.2.1)](https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/SD/Bootloader/UEFI.html). Capsule staging behavior (including `FmpCapsuleSinglePartitionChain` and `/EFI/UpdateCapsule/` payloads) is specified in the [Capsule Update documentation](https://github.com/NVIDIA/edk2-nvidia/blob/main/Silicon/NVIDIA/Library/FmpDeviceLib/CapsuleUpdateJetson.md).
+
 ---
 
 ### 5. Verified Command Inventory (nano1, JetPack 7.2.1 / r39.2.1)
@@ -465,6 +471,8 @@ VenHw(1E5A432C-...)/MemoryMapped(0xB,0x14160000,0x1417FFFF)/PciRoot(0x0)/Pci(0x0
 - [Jetson Linux r36.4.0 release (introduces PCN 211461 / 211462 module support)](https://developer.nvidia.com/embedded/jetson-linux-r3640)
 - [JetPack 7.2 announcement (unified ISO installer, Ubuntu 24.04, kernel 6.8, CUDA 13, arm64-SBSA)](https://forums.developer.nvidia.com/t/jetpack-7-2-jetson-software-goes-agentic-with-jetson-linux-39-2/372060)
 - [NVIDIA edk2-nvidia Build Configuration Repository](https://github.com/NVIDIA/edk2-nvidia/blob/main/Platform/NVIDIA/Kconfig)
+
+For the full categorized reference list (NVIDIA documentation, source repositories, engineering analysis), see [docs/references.md](references.md).
 
 **Community References**:
 - [UEFI Shell Specification 2.0 (UEFI Forum)](https://uefi.org/sites/default/files/resources/UEFI_Shell_Spec_2_0.pdf)

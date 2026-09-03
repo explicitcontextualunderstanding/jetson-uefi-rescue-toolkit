@@ -72,7 +72,8 @@ jetson-uefi-rescue-toolkit/
 ├── .vale.ini                           # Vale style and technical prose configuration
 ├── .vale/                              # Custom styles (Google, proselint) & Fleet vocabulary
 ├── docs/
-│   └── uefi-rescue-shell-tutorial.md   # Full human-readable technical tutorial
+│   ├── uefi-rescue-shell-tutorial.md   # Full human-readable technical tutorial
+│   └── references.md                   # Categorized external references (NVIDIA, EDK2, field guides)
 ├── .agents/
 │   └── skills/
 │       └── jetson-uefi-recovery/
