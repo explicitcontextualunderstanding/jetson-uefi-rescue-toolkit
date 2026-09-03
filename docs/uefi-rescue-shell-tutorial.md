@@ -330,7 +330,7 @@ Shell> fs2:\EFI\BOOT\grubaa64.efi
 
 A `grub.cfg` file sitting next to `grubaa64.efi` ensures GRUB loads its configuration even when it cannot read secondary ISO9660 or ext4 partitions directly.
 
-The five root causes behind UEFI Shell drops (QSPI mismatch, missing DTB, ODMDATA conflict, PKC verification, A/B exhaustion) are analyzed in the [Proventus Nova recovery analysis](https://proventusnova.com/blog/jetson-uefi-shell-assertion-boot-recovery), and the launcher fallback order above is documented in the [L4TLauncher source](https://github.com/NVIDIA/edk2-nvidia/blob/main/Silicon/NVIDIA/Application/L4TLauncher/L4TLauncher.c). Both are cataloged in [docs/references.md](references.md).
+The five root causes behind UEFI Shell drops (QSPI mismatch, missing DTB, ODMDATA conflict, PKC verification, A/B exhaustion) are analyzed in the [Proventus Nova recovery analysis](https://proventusnova.com/blog/jetson-uefi-shell-assertion-boot-recovery), and the launcher fallback order above is documented in the [L4TLauncher source](https://github.com/NVIDIA/edk2-nvidia/blob/r39.2.1/Silicon/NVIDIA/Application/L4TLauncher/L4TLauncher.c). Both are cataloged in [docs/references.md](references.md).
 
 ---
 
@@ -485,7 +485,7 @@ reboot -f
 
 This in-band path is often the fastest exit from a persistent recovery loop: the recovery flags live in NVRAM, so they survive disk fixes until explicitly cleared — clearing them here (rather than re-flashing) restores the normal boot chain with the rootfs untouched.
 
-The NVIDIA variable schemas used here (`RootfsStatusSlotA`/`RootfsStatusSlotB`, `L4TDefaultBootMode`, GUID `781e084c-a330-417c-b678-38e696380cb9`) and the efivarfs restoration procedure are documented in the [UEFI Adaptation guide (r39.2.1)](https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/SD/Bootloader/UEFI.html). Capsule staging behavior (including `FmpCapsuleSinglePartitionChain` and `/EFI/UpdateCapsule/` payloads) is specified in the [Capsule Update documentation](https://github.com/NVIDIA/edk2-nvidia/blob/main/Silicon/NVIDIA/Library/FmpDeviceLib/CapsuleUpdateJetson.md).
+The NVIDIA variable schemas used here (`RootfsStatusSlotA`/`RootfsStatusSlotB`, `L4TDefaultBootMode`, GUID `781e084c-a330-417c-b678-38e696380cb9`) and the efivarfs restoration procedure are documented in the [UEFI Adaptation guide (r39.2.1)](https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/SD/Bootloader/UEFI.html). Capsule staging behavior (including `FmpCapsuleSinglePartitionChain` and `/EFI/UpdateCapsule/` payloads) is specified in the [Capsule Update documentation](https://github.com/NVIDIA/edk2-nvidia/blob/r39.2.1/Silicon/NVIDIA/Library/FmpDeviceLib/CapsuleUpdateJetson.md).
 
 ---
 
@@ -648,7 +648,7 @@ VenHw(1E5A432C-...)/MemoryMapped(0xB,0x14160000,0x1417FFFF)/PciRoot(0x0)/Pci(0x0
 - [NVIDIA UEFI Bootloader Adaptation Guide (r39.2)](https://docs.nvidia.com/jetson/archives/r39.2/DeveloperGuide/SD/Bootloader/UEFI.html)
 - [Jetson Linux r36.4.0 release (introduces PCN 211461 / 211462 module support)](https://developer.nvidia.com/embedded/jetson-linux-r3640)
 - [JetPack 7.2 announcement (unified ISO installer, Ubuntu 24.04, kernel 6.8, CUDA 13, arm64-SBSA)](https://forums.developer.nvidia.com/t/jetpack-7-2-jetson-software-goes-agentic-with-jetson-linux-39-2/372060)
-- [NVIDIA edk2-nvidia Build Configuration Repository](https://github.com/NVIDIA/edk2-nvidia/blob/main/Platform/NVIDIA/Kconfig)
+- [NVIDIA edk2-nvidia Build Configuration Repository](https://github.com/NVIDIA/edk2-nvidia/blob/r39.2.1/Platform/NVIDIA/Kconfig)
 
 For the full categorized reference list (NVIDIA documentation, source repositories, engineering analysis), see [docs/references.md](references.md).
 

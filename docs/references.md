@@ -30,7 +30,7 @@ Curated external references that ground this repository's firmware architecture,
 
   The core open-source UEFI implementation for Jetson Orin (`t23x`), including the `L4TLauncher` application source (`Silicon/NVIDIA/Application/L4TLauncher/`) and the EDK2 `Kconfig` settings (`Platform/NVIDIA/Kconfig`) that control whether the UEFI Shell is compiled into a firmware build. Used by the firmware analyzers under `firmware/` to interpret extracted firmware volumes.
 
-- [Capsule Update documentation for NVIDIA Jetson platforms (edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/blob/main/Silicon/NVIDIA/Library/FmpDeviceLib/CapsuleUpdateJetson.md)
+- [Capsule Update documentation for NVIDIA Jetson platforms (edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/blob/r39.2.1/Silicon/NVIDIA/Library/FmpDeviceLib/CapsuleUpdateJetson.md)
 
   FMP capsule mechanics: `FmpCapsuleSinglePartitionChain` boot-chain targeting, in-band EFI payload staging under `/EFI/UpdateCapsule/` (for example `TEGRA_BL.Cap`), and the behavioral difference between full and minimal capsule updates. Grounds Signature 5 (capsule staged but version not bumped) and the `BootChainFwNext` variable behavior described in the tutorial.
 
@@ -50,20 +50,20 @@ Curated external references that ground this repository's firmware architecture,
 
 - [Jetson Orin UEFI boot sequence: MB1, MB2, TF-A, UEFI, and kernel (Proventus Nova)](https://proventusnova.com/blog/jetson-uefi-boot-flow-mb1-mb2-tfa-kernel)
 
-  Stage-by-stage anatomy of the T234 boot pipeline, grounding the tutorial's boot-pipeline diagram (Tier 2 §1).
+  Stage-by-stage anatomy of the T234 boot pipeline, grounding the tutorial's boot-pipeline diagram (Tier 2 §1). The pipeline structure (BootROM → MB1 → MB2 → TF-A → EDK2 UEFI → L4TLauncher) is invariant across JetPack 5/6/7 on T234; the tutorial's [Scope section](uefi-rescue-shell-tutorial.md#scope-and-platform-baseline-jetpack-72x-only) records what does change between generations.
 
-- [L4TLauncher source (NVIDIA/edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/blob/main/Silicon/NVIDIA/Application/L4TLauncher/L4TLauncher.c)
+- [L4TLauncher source (NVIDIA/edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/blob/r39.2.1/Silicon/NVIDIA/Application/L4TLauncher/L4TLauncher.c)
 
   Authoritative source for the probe order behind `Android image header not seen` (extlinux.conf → GRUB → Android recovery header) and the `EFI_UNSUPPORTED` refusal path discussed in Tier 2 §2.
 
 - [Jetson Orin Nano — Persistent Recovery Boot Failure with Multiple JetPack Versions (NVIDIA forums)](https://forums.developer.nvidia.com/t/jetson-orin-nano-persistent-recovery-boot-failure-with-multiple-jetpack-versions/347683)
 
-  Field thread documenting the persistent recovery loop caused by stale slot-status variables — the exact scenario the efivarfs restoration recipe resolves.
+  Field thread (JetPack 5/6-era Orin) documenting the persistent recovery loop caused by stale slot-status variables. The variable semantics and the efivarfs restoration recipe are unchanged on the JetPack 7.2.x baseline — the mechanism is identical, the thread predates it.
 
 - [Boot Assertion and Reset to Recovery by Jetson UEFI (NVIDIA forums)](https://forums.developer.nvidia.com/t/boot-assertion-and-reset-to-recovery-by-jetson-uefi/279461)
 
-  Companion thread on assertion-driven UEFI Shell drops and the A/B retry-counter exhaustion mechanism (five-root-cause taxonomy, cause #5).
+  Companion thread on assertion-driven UEFI Shell drops and the A/B retry-counter exhaustion mechanism (five-root-cause taxonomy, cause #5). Mechanism unchanged on JetPack 7.2.x; the firmware-version specifics in the thread predate this baseline.
 
 - [failing boot retry count requires hard flash · Issue #22 (NVIDIA/edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/issues/22)
 
-  Maintainer acknowledgment that an exhausted boot retry budget historically required a hard flash — context for why the ESC-menu / efivarfs quarantine-clear paths matter.
+  Maintainer acknowledgment that an exhausted boot retry budget historically required a hard flash — context for why the ESC-menu / efivarfs quarantine-clear paths matter. The issue's observations predate JetPack 7.2.x; the quarantine-clear alternatives this tutorial documents are the version-current answer.
