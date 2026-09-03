@@ -13,6 +13,7 @@ A field-tested toolkit and diagnostic runbook for recovering unbootable **NVIDIA
 This repository is structured for both human engineers and autonomous AI agents:
 
 - **For Human Engineers & Learning:** [**`docs/uefi-rescue-shell-tutorial.md`**](docs/uefi-rescue-shell-tutorial.md)—Exhaustive technical tutorial detailing Jetson EDK2 architecture, NVRAM variable mechanics, partition table pitfalls, and live recovery walk-throughs.
+- **For Source Grounding & Verification:** [**`docs/references.md`**](docs/references.md)—Categorized external references (official NVIDIA documentation, EDK2 source repositories, engineering analysis and field guides) grounding the tutorial's firmware architecture and recovery procedures.
 - **For AI Agents & Collaborators:** [**`AGENTS.md`**](AGENTS.md)—Operational directives, system boundaries, and safety invariant rules (such as non-destructive probing before writes).
 - **For Agent Frameworks:** [**`.agents/skills/jetson-uefi-recovery/SKILL.md`**](.agents/skills/jetson-uefi-recovery/SKILL.md)—Modular, executable runbook recipes and error-signature decision trees.
 
