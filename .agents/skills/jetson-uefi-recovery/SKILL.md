@@ -5,7 +5,9 @@ description: Jetson Orin Nano / NX UEFI recovery runbooks (JetPack 7.2.x / L4T r
 
 # Jetson UEFI Recovery Skill
 
-Specialized domain knowledge, non-destructive diagnostic sequences, and automated remedy recipes for unbootable NVIDIA Jetson Orin Nano / Orin NX systems.
+Specialized domain knowledge, non-destructive diagnostic sequences, and automated remedy recipes for unbootable NVIDIA Jetson Orin Nano / Orin NX systems (JetPack 7.2.x / L4T r39.2.x scope).
+
+**Companion documents**: the human-facing tutorial (`docs/uefi-rescue-shell-tutorial.md`) owns the canonical content this skill summarizes. Before selecting a Signature below, orient with the tutorial's **Tier 0: Triage Decision Matrix** (failure-layer → evidence → tool routing). Handle-number conventions and the J14/RCM hardware reference live there too (Tier 1 §1 and §3 Step 1).
 
 ---
 
@@ -47,10 +49,10 @@ sudo python3 host/check_esp_pe_binaries.py "${DEV}1"
 
 ### Signature 1: "Android image header not seen" (L4TLauncher Failure)
 - **Cause**: L4TLauncher failed to read `extlinux.conf` or ISO9660 embedded configuration, and fell back to treating the kernel partition as an Android boot image.
-- **Remedy**: Stage GRUB directly on the filesystem next to `L4TLauncher.efi`:
+- **Remedy**: Stage GRUB directly on the filesystem next to `L4TLauncher.efi`. Example mapping (tutorial Tier 2 §8 capture): rescue USB = `fs4:`, target NVMe ESP = `fs2:`—substitute from your `map -r`; never copy handle numbers:
   ```text
-  Shell> stage-grub.nsh fs1: fs3:
-  Shell> fs3:
+  Shell> fs4:\stage-grub.nsh fs4: fs2:
+  Shell> fs2:
   Shell> cd \EFI\BOOT
   Shell> grubaa64.efi
   ```
@@ -64,10 +66,10 @@ sudo python3 host/check_esp_pe_binaries.py "${DEV}1"
 
 ### Signature 3: `dmpstore: No matching variables found. Guid xxxxx, Name > tmp/dmpstore_log.txt`
 - **Cause**: In UEFI Shell v2.2, `dmpstore` does not support redirection (`>`) to a file on the command line; it interprets the `>` character as a variable name pattern.
-- **Remedy**: Dump variables without redirection and use `-b` (page pause), or run a batch `.nsh` script that redirects stdout at the script invocation level:
+- **Remedy**: Dump variables without redirection and use `-b` (page pause), or run a batch `.nsh` script that redirects stdout at the script invocation level. The output handle is whatever your `map -r` showed for writable media (`fs4:` = rescue USB in the example mapping):
   ```text
   Shell> dmpstore -b
-  Shell> probe_uefi_shell.nsh > fs0:\probe_out.txt
+  Shell> probe_uefi_shell.nsh > fs4:\probe_out.txt
   ```
 
 ### Signature 4: USB Appears as `BLKx:` but Has No `FSx:` Handle
@@ -127,15 +129,15 @@ sudo ./host/uefi_boot_verifier.sh /dev/sdX
 
 ### Recipe B: In-Shell Automated Discovery
 ```text
-Shell> fs0:\startup.nsh
+Shell> fs4:\startup.nsh
 ```
-*Runs automatically on boot if placed at `fs0:\startup.nsh`.*
+*Runs automatically on boot if placed at the ESP root. The handle is whatever `map -r` showed for the rescue USB (`fs4:` in the example mapping)—verify, never assume.*
 
 ### Recipe C: Direct Kernel Execution (EFI Stub Emergency Boot)
 ```text
-Shell> fs0:\boot-kernel-stub.nsh fs2: PARTUUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Shell> fs4:\boot-kernel-stub.nsh fs2: PARTUUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
-*Directly executes Linux kernel when bootloaders are broken.*
+*Directly executes Linux kernel when bootloaders are broken. Script runs from the rescue USB (`fs4:` in the example mapping); the handle argument is the filesystem holding the kernel and initrd (`fs2:` = NVMe ESP in the example mapping).*
 
 ### Recipe D: Offline Command Set Discovery
 ```bash
@@ -155,7 +157,7 @@ python3 firmware/analyze_uefi_shell.py /tmp/jetson_fw/Linux_for_Tegra/bootloader
 3. Installation targets onboard NVMe. If it aborts at Step 9/13 (`nvidia-l4t-bootloader` postinst), the NVMe rootfs is typically intact—see Signature 6 for the offline salvage path using the ISO's own package pool (`/cdrom/pool/main/n/`). If the board boot-loops before the installer starts, see Signature 5.
 
 ### Recipe F: Bench Boot-Validation Gate (QEMU/AAVMF) Before Recommending a Stick
-Run before telling a user a rescue stick is ready. Structural verification (Recipes A/D) is necessary but not sufficient.
+Run before telling a user a rescue stick is ready. Structural verification (Recipes A/D) is necessary but not sufficient. Full rationale and the asymmetric-validity rule: tutorial Tier 2 §7.
 
 1. Build a byte-faithful replica of the stick (full size, so the backup GPT region is addressable).
 2. Boot the replica under `qemu-system-aarch64 -M virt` + AAVMF with the image attached as USB mass storage (`qemu-xhci` + `usb-storage`).

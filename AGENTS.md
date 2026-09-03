@@ -7,7 +7,7 @@ Core operational rules, system boundaries, and execution guardrails for autonomo
 ## 1. System Context & Target Platform
 
 - **Hardware Target**: NVIDIA Jetson Orin Nano (4 GB, 8 GB) and Jetson Orin NX (8 GB, 16 GB).
-- *\Release Scope\*: JetPack 7.2.x (L4T r39.2.x) only. Procedures for JetPack 6.x or earlier, and for legacy T210 hardware, are out of scope and must not be added to this repository.
+- **Release Scope**: JetPack 7.2.x (L4T r39.2.x) only. Procedures for JetPack 6.x or earlier, and for legacy T210 hardware, are out of scope and must not be added to this repository.
 - **Firmware Stack**: TianoCore EDK II build, UEFI Spec 2.70, Shell v2.2 (Level 3 Interactive, 71 compiled commands; JetPack 7.2 / 7.2.1, L4T r39.2.1 baseline).
 - **Firmware Storage**: Onboard QSPI-NOR flash holds the primary UEFI firmware volumes (`uefi_jetson.bin`) and non-volatile EFI variables (NVRAM).
 - **Boot Topology**:
@@ -34,6 +34,7 @@ Agents generating code or instructing users on recovery commands MUST strictly a
 - In the UEFI Shell, drive enumeration handles (`FS0:`, `FS1:`, `FS2:`, `FS3:`, `FS4:`) are dynamic and shift across reboots or when devices are plugged into different USB ports.
 - **Never hardcode an assumption that `FS0:` is the USB or `FS1:` is the NVMe.**
 - Agents must instruct the user to run `map -r` and identify the media by inspecting device paths (look for `USB(...)` vs `NVMe(...)` and `HD(N,GPT,...)`).
+- Worked examples must never present a handle number as canonical. When an example needs concrete handles, declare the example mapping explicitly (this repository's convention: rescue USB = fs4:, NVMe ESP = fs2:, from the tutorial's Tier 2 §8 capture) and instruct the user to substitute from their own `map -r`.
 
 ### Rule 4: Uppercase Path Sensitivity
 - EDK2 early-stage binary lookups query uppercase paths (`\EFI\BOOT\BOOTAA64.EFI`) explicitly.
@@ -60,6 +61,8 @@ When asked to diagnose or resolve a boot failure, select tools according to this
 | **FAT32 start-cluster (+2 offset) bug** | `host/fix_esp_dir_clusters.py` | Workstation |
 | **Creating compliant rescue ESP** | `host/stage-fat-esp.sh` | Workstation |
 | **Binary architecture verification** | `host/check_esp_pe_binaries.py` | Workstation |
+| **Bench boot-validation of rescue media** | qemu-system-aarch64 + AAVMF (Recipe F in .agents/skills/jetson-uefi-recovery/SKILL.md) | Workstation (Linux/macOS, QEMU + AAVMF installed) |
+| **Scope + failure-layer orientation before any recovery** | docs/uefi-rescue-shell-tutorial.md Tier 0 matrix | Any (read-first) |
 | **Shell command inventory discovery** | `nsh/probe_uefi_shell.nsh` | Jetson UEFI Shell (`Shell>`) |
 | **Automated ESP discovery & boot** | `nsh/startup.nsh` | Jetson UEFI Shell (`Shell>`) |
 | **L4tLauncher missing config / header error** | `nsh/stage-grub.nsh` | Jetson UEFI Shell (`Shell>`) |
