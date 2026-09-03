@@ -425,7 +425,47 @@ unload, ver, vol
 
 ---
 
-### 6. Reference: Reading `map -r` Device Paths
+### 6. Bench-Validating Rescue Media with QEMU/AAVMF
+
+The host-side verifiers in `host/` prove rescue media is structurally valid (GPT signatures, FAT32 boot parameters, PE headers). They cannot prove the media *boots*. The missing rung on the validation ladder is an end-to-end boot test on the workstation, with no Jetson attached.
+
+The harness pattern, field-proven during the nano1 recovery:
+
+1. **Replicate the media byte-faithfully.** Build a sparse disk image containing the stick's exact bytes: protective MBR + GPT (primary and backup), the full ESP, and the ISO payload. Partial or regenerated replicas introduce their own variables.
+
+   ```bash
+   dd if=/dev/sdX of=usb_replica.img bs=1M count=5400 conv=notrunc status=none
+   truncate -s 115G usb_replica.img   # restore full size so the backup GPT is addressable
+   ```
+
+2. **Boot it under AAVMF as a USB device.** AAVMF is Debian's TianoCore EDK2 build for AArch64, the same firmware code family as Jetson's QSPI UEFI:
+
+   ```bash
+   qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1024 -nographic \
+     -drive if=pflash,format=raw,readonly=on,file=/usr/share/AAVMF/AAVMF_CODE.fd \
+     -drive if=pflash,format=raw,file=AAVMF_VARS_test.fd \
+     -drive if=none,id=usb0,format=raw,file=usb_replica.img \
+     -device qemu-xhci -device usb-storage,drive=usb0
+   ```
+
+3. **Score the boot mechanically.** Pass requires the GRUB menu entry visible AND the kernel reaching `Linux version` on the console. Menu-only or parse-error output is a fail.
+
+#### The Asymmetric Validity Rule (read before trusting any bench result)
+
+The emulator substitutes the firmware but replicates the media. This makes AAVMF results **asymmetric**:
+
+- **A failure at the GRUB layer is diagnostic for the Jetson.** GRUB parse/exec semantics are firmware-family-identical (both Jetson UEFI and AAVMF are TianoCore EDK2; GRUB 2.12 is GRUB 2.12). A config that produces `error: syntax error` cascades under AAVMF will fail the same way on the board.
+- **A success proves only the GRUB layer.** It says nothing about the layers AAVMF does not contain: NVIDIA `L4tLauncher` probe order, Tegra USB/NVMe enumeration and `fsN:` handle numbering, QSPI/NVRAM state (slot flags, `COMPATIBLE_SPEC`, capsule behavior), or Ext4Dxe parsing the ext4 rootfs. Never conclude "boots in QEMU, safe to flash" without the final step.
+
+Therefore: reproduce failures on the bench, fix them, re-verify, **then transfer-validate once on real hardware before trusting the stick in the field.**
+
+#### Why not emulate deeper?
+
+There is no Tegra234 machine model in QEMU (`-M virt` is a generic ARM platform), and `uefi_jetson.bin` depends on Tegra boot tables, HSP/BPMP, and Tegra drivers that fail outside Tegra silicon. NVIDIA ships no public T234 Fixed Virtual Platform. Adding more `-M virt` devices changes the topology but adds no Tegra fidelity. The substitute-firmware point used here is not a shortcut; it is the only available emulation layer, and every below-GRUB claim must instead be grounded in board evidence (serial console, ESRT, NVRAM dumps).
+
+---
+
+### 7. Reference: Reading `map -r` Device Paths
 
 Empirical mapping output recorded on `nano1` with an internal NVMe SSD (16-partition L4T layout) and a rescue USB thumbdrive attached:
 
@@ -459,7 +499,7 @@ VenHw(1E5A432C-...)/MemoryMapped(0xB,0x14160000,0x1417FFFF)/PciRoot(0x0)/Pci(0x0
 
 ---
 
-### 7. Sources & Hardware Provenance
+### 8. Sources & Hardware Provenance
 
 **Empirical Hardware Benchmarks**:
 - Test hardware: Jetson Orin Nano Developer Kit (`nano1`, 8 GB).

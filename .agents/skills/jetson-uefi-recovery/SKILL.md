@@ -153,3 +153,13 @@ python3 firmware/analyze_uefi_shell.py /tmp/jetson_fw/Linux_for_Tegra/bootloader
    ```
 2. Boot the Jetson, press **F11** at the UEFI banner for the Boot Manager Menu, and select the USB ISO. The installer's own menus require a DP display or the debug UART—a fully headless ISO install is not practical.
 3. Installation targets onboard NVMe. If it aborts at Step 9/13 (`nvidia-l4t-bootloader` postinst), the NVMe rootfs is typically intact—see Signature 6 for the offline salvage path using the ISO's own package pool (`/cdrom/pool/main/n/`). If the board boot-loops before the installer starts, see Signature 5.
+
+### Recipe F: Bench Boot-Validation Gate (QEMU/AAVMF) Before Recommending a Stick
+Run before telling a user a rescue stick is ready. Structural verification (Recipes A/D) is necessary but not sufficient.
+
+1. Build a byte-faithful replica of the stick (full size, so the backup GPT region is addressable).
+2. Boot the replica under `qemu-system-aarch64 -M virt` + AAVMF with the image attached as USB mass storage (`qemu-xhci` + `usb-storage`).
+3. PASS requires BOTH: the boot entry visible in the GRUB menu AND `Linux version` reached on the emulated console. Anything else is a fail—do not rationalize parse errors as cosmetic.
+4. On PASS, the GRUB layer is validated. On any change to the stick's config, rebuild the replica and re-run—never hand-edit the stick and skip re-validation.
+5. ALWAYS finish with one transfer-validation boot on real hardware before declaring the stick field-ready. AAVMF success proves nothing about `L4tLauncher` probe order, Tegra USB/NVMe enumeration, QSPI/NVRAM state, or Ext4Dxe on the rootfs.
+6. Failure triage: if AAVMF reproduces the board's symptom, the bug is in the stick's config (fix and bisect on the bench). If AAVMF boots cleanly where the board fails, the bug is below the GRUB layer—escalate to board evidence (serial console, NVRAM dumps, ESRT), not more emulation.
