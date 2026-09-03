@@ -1,6 +1,6 @@
 ---
 name: jetson-uefi-recovery
-description: Jetson Orin Nano / NX UEFI recovery runbooks, read-only diagnostic ladders, and automated error-signature remedies.
+description: Jetson Orin Nano / NX UEFI recovery runbooks (JetPack 7.2.x / L4T r39.2.x scope), read-only diagnostic ladders, and automated error-signature remedies for the unified ISO installer era.
 ---
 
 # Jetson UEFI Recovery Skill
@@ -77,6 +77,44 @@ sudo python3 host/check_esp_pe_binaries.py "${DEV}1"
   sudo bash host/stage-fat-esp.sh /dev/sdX
   ```
 
+### Signature 5: ISO Pre-Install Boot Loop Guard
+- **Error strings** (serial or DP console while booting a JetPack 7.2.x installer ISO):
+  ```text
+  ISO installation medium detected, running PreIsoInstaller logic
+  RunPreIsoInstaller: Capsule staged 5 times but version not bumped, aborting to prevent boot loop
+  L4TLauncher: Iso boot loop detected, halting
+  ```
+- **Cause**: The ISO's pre-install stage arms a QSPI firmware capsule on every boot, but the firmware version never advances, so L4tLauncher halts instead of looping. Common drivers: NVRAM write protection blocking the capsule, and PCN 211461 / 211462 hardware-revision modules sitting on pre-r36.4.0 QSPI firmware.
+- **Remedy**: Bump QSPI out-of-band, then retry the ISO:
+  1. Put the board in Force Recovery (RCM) and flash from a Linux host:
+     ```bash
+     sudo ./l4t_initrd_flash.sh --erase-all jetson-orin-nano-devkit-super internal
+     ```
+  2. Verify the UEFI banner reports `Jetson System firmware version 39.2.x-...`, then boot the ISO again.
+
+### Signature 6: ISO Install Aborts at Step 9/13 ("Updating boot firmware")
+- **Error strings** (installer log / serial console):
+  ```text
+  curtin in-target nvidia-l4t-bootloader ... exit 100
+  nvidia-l4t-bootloader postinst: does not match any known boards
+  ```
+- **Cause**: The `nvidia-l4t-bootloader` post-install hook cannot match the board identity in `COMPATIBLE_SPEC` (from `/etc/nv_boot_control.conf` / QSPI NVRAM) against its known-boards table—typically a stale or wrong board string left by a prior release (for example, an Orin NX spec on an Orin Nano Super module). The NVMe rootfs is usually already fully extracted; only the bootloader step failed.
+- **Remedy**:
+  1. Check identity: `grep COMPATIBLE_SPEC /etc/nv_boot_control.conf`. For an Orin Nano 8 GB Super developer kit it must read `3767--0005--1--jetson-orin-nano-devkit-super-` (cross-check the module identity against `/proc/device-tree/model`).
+  2. Salvage offline (no network) without re-extracting the rootfs: bind-mount virtual filesystems into the installed target, then install the bootloader packages directly from the ISO media and reinstall the boot chain:
+     ```bash
+     mount -o ro /dev/nvme0n1p1 /mnt
+     mount --bind /dev /mnt/dev && mount --bind /proc /mnt/proc && mount --bind /sys /mnt/sys
+     chroot /mnt dpkg -i /cdrom/pool/main/n/nvidia-l4t-bootloader/*.deb
+     chroot /mnt grub-install && chroot /mnt update-grub
+     ```
+  3. If the spec string itself is wrong, correct `/etc/nv_boot_control.conf` to match the EEPROM-reported board before rerunning the bootloader step. A wrong string routes capsule payloads to the wrong board configuration.
+
+### Signature 7: Kernel Panic at `tegra_hsp_sm_recv32` After Firmware Update
+- **Error string** (serial console; panic before PCIe init): `tegra_hsp_sm_recv32+0x50/0x70` followed by a NULL pointer dereference in `swapper/0`.
+- **Cause**: A JetPack 5/6 kernel (5.15-tegra) booting against JetPack 7.2.x QSPI firmware. The HSP (Hardware Synchronization Primitives) mailbox protocol changed between JetPack 6 and JetPack 7; the old kernel's register layout mismatches the new firmware and panics before init.
+- **Remedy**: Never downgrade QSPI to match an old rootfs. Boot a matching r39.2.x kernel and initrd instead (recovery ISO or staged rescue USB), then repair or upgrade the NVMe rootfs in place (chroot upgrade against the r39.2.x package pool, or re-extract the rootfs payload).
+
 ---
 
 ## 3. Fast-Path Recipes
@@ -107,3 +145,11 @@ bash firmware/fetch-uefi-firmware.sh r39.2.1 /tmp/jetson_fw
 # Inventory compiled commands without booting hardware
 python3 firmware/analyze_uefi_shell.py /tmp/jetson_fw/Linux_for_Tegra/bootloader/uefi_jetson.bin
 ```
+
+### Recipe E: Unified ISO Recovery Install (JetPack 7.2.x)
+1. Write the JetPack 7.2.x installer ISO to a USB drive on the workstation (balenaEtcher, or `dd`):
+   ```bash
+   sudo dd if=jetsoninstaller-r39.2.1-arm64.iso of=/dev/sdX bs=4M status=progress
+   ```
+2. Boot the Jetson, press **F11** at the UEFI banner for the Boot Manager Menu, and select the USB ISO. The installer's own menus require a DP display or the debug UART—a fully headless ISO install is not practical.
+3. Installation targets onboard NVMe. If it aborts at Step 9/13 (`nvidia-l4t-bootloader` postinst), the NVMe rootfs is typically intact—see Signature 6 for the offline salvage path using the ISO's own package pool (`/cdrom/pool/main/n/`). If the board boot-loops before the installer starts, see Signature 5.
