@@ -45,3 +45,25 @@ Curated external references that ground this repository's firmware architecture,
 - [Serial Debug Console Setup: Jetson Nano, Xavier NX and Orin Nano (JetsonHacks)](https://jetsonhacks.com/2019/04/19/jetson-nano-serial-console/)
 
   Practical walkthrough for connecting 3.3V TTL USB-to-UART serial adapters to a Jetson debug interface: cross-wiring TXD/RXD, common ground, and why the adapter's power lead must stay disconnected. Field-proven hardware technique; pairing instructions assume the header-wiring context of the Board Automation reference above.
+
+### Boot flow deep-dives and field receipts
+
+- [Jetson Orin UEFI boot sequence: MB1, MB2, TF-A, UEFI, and kernel (Proventus Nova)](https://proventusnova.com/blog/jetson-uefi-boot-flow-mb1-mb2-tfa-kernel)
+
+  Stage-by-stage anatomy of the T234 boot pipeline, grounding the tutorial's boot-pipeline diagram (Tier 2 §1).
+
+- [L4TLauncher source (NVIDIA/edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/blob/main/Silicon/NVIDIA/Application/L4TLauncher/L4TLauncher.c)
+
+  Authoritative source for the probe order behind `Android image header not seen` (extlinux.conf → GRUB → Android recovery header) and the `EFI_UNSUPPORTED` refusal path discussed in Tier 2 §2.
+
+- [Jetson Orin Nano — Persistent Recovery Boot Failure with Multiple JetPack Versions (NVIDIA forums)](https://forums.developer.nvidia.com/t/jetson-orin-nano-persistent-recovery-boot-failure-with-multiple-jetpack-versions/347683)
+
+  Field thread documenting the persistent recovery loop caused by stale slot-status variables — the exact scenario the efivarfs restoration recipe resolves.
+
+- [Boot Assertion and Reset to Recovery by Jetson UEFI (NVIDIA forums)](https://forums.developer.nvidia.com/t/boot-assertion-and-reset-to-recovery-by-jetson-uefi/279461)
+
+  Companion thread on assertion-driven UEFI Shell drops and the A/B retry-counter exhaustion mechanism (five-root-cause taxonomy, cause #5).
+
+- [failing boot retry count requires hard flash · Issue #22 (NVIDIA/edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/issues/22)
+
+  Maintainer acknowledgment that an exhausted boot retry budget historically required a hard flash — context for why the ESC-menu / efivarfs quarantine-clear paths matter.
