@@ -34,7 +34,7 @@ Relative to JetPack 6.x, the JetPack 7 platform reset changes what a recovery ru
 
 ---
 
-## Tier 0: Triage Decision Matrix — Which Layer Is Failing?
+## Tier 0: Triage Decision Matrix—Which Layer Is Failing?
 
 Before touching any tool, answer one question: **which layer of the stack is broken?** The layers are hardware → firmware → filesystem → kernel → configuration, and each has a distinct discriminator. Picking the wrong layer costs days; the table below compresses the fault taxonomy into observable symptoms and the fastest decisive test for each.
 
@@ -44,14 +44,14 @@ Before touching any tool, answer one question: **which layer of the stack is bro
 | 2 | **Firmware (QSPI/UEFI)** | Drops to `Shell>` with an `ASSERT`, or `LoadImage` refuses a verified-valid ARM64 binary on a readable FS | Binary verifies (PE header, 0xAA64) but firmware refuses it → firmware-level rejection, not media | UEFI Shell `map -r` + ESC Setup quarantine clear | [Tier 2 §2](#2-when-the-firmware-refuses-a-valid-binary-efi_unsupported) |
 | 3 | **Boot configuration (ESP content)** | `Shell>` drop without ASSERT; `BOOTAA64.EFI` runs but `L4TLauncher` prints `Android image header not seen` | `BOOTAA64.EFI` executed fine → launcher found no `extlinux.conf`/`grubaa64.efi` next to it | UEFI Shell `ls \EFI\BOOT` + staging `grubaa64.efi`/`grub.cfg` | [Tier 2 §1](#1-jetson-firmware-boot-pipeline--mental-model) |
 | 4 | **Filesystem (rootfs)** | Launcher or GRUB starts the kernel but mount of the root filesystem fails (or `L4TLauncher` falls back to recovery) | PARTLABEL/GUID correct but Ext4Dxe (firmware) or kernel ext4 cannot mount → suspect dirty journal or feature flags beyond the firmware's driver | `e2fsck -fy` from a live/rescue environment; inspect with `tune2fs -l` | [Tier 2 §3](#3-direct-linux-kernel-execution-via-efi-stub) |
-| 5 | **Kernel / device tree** | Kernel starts (serial prints `Linux version`) then panics or hangs before userspace | Serial console output: panic text names the failing subsystem (e.g. HSP mailbox mismatch = kernel/firmware generation skew) | Direct EFI-stub kernel launch with explicit `console=` to separate kernel from bootloader | [Tier 2 §3](#3-direct-linux-kernel-execution-via-efi-stub) |
+| 5 | **Kernel / device tree** | Kernel starts (serial prints `Linux version`) then panics or hangs before userspace | Serial console output: panic text names the failing subsystem (for example, HSP mailbox mismatch = kernel/firmware generation skew) | Direct EFI-stub kernel launch with explicit `console=` to separate kernel from bootloader | [Tier 2 §3](#3-direct-linux-kernel-execution-via-efi-stub) |
 | 6 | **OS configuration (userland)** | Kernel boots, switch_root fails, services fail, or SSH never appears | `systemd` reached userspace → the problem is inside the rootfs, not below it | Recovery/rescue shell; inspect `/var/log`, `systemctl`, `dpkg --audit` | [Recovery kernel](#the-recovery-kernel-shell-and-efi-variable-restoration) |
 
 Three worked discriminators from a real recovery (field-verified on an Orin Nano, JetPack 7.2.1):
 
-- **Firmware vs media**: a valid `BOOTAA64.EFI` (correct PE machine type 0xAA64) on a readable FAT partition that the firmware refuses with `EFI_UNSUPPORTED` is firmware-level boot-chain rejection — the media was proven readable by `map`/`ls` first.
+- **Firmware vs media**: a valid `BOOTAA64.EFI` (correct PE machine type 0xAA64) on a readable FAT partition that the firmware refuses with `EFI_UNSUPPORTED` is firmware-level boot-chain rejection—the media was proven readable by `map`/`ls` first.
 - **Bootloader vs filesystem**: `Android image header not seen` is *not* an Android error. It means `BOOTAA64.EFI` ran, found no `extlinux.conf` or `grubaa64.efi`, and fell through to its last-resort Android-recovery probe. The fix is staging GRUB next to the launcher, not repartitioning.
-- **Kernel vs configuration**: once serial shows `Linux version`, everything above the kernel line is a configuration/userland problem and everything below was already proven working — split the investigation at that line.
+- **Kernel vs configuration**: once serial shows `Linux version`, everything above the kernel line is a configuration/userland problem and everything below was already proven working—split the investigation at that line.
 
 > [!IMPORTANT]
 > **Probe the territory before theorizing.** Every major false path in a 90-day recovery of one Orin Nano traced to an unverified assumption that a single direct-inspection command would have falsified in seconds: an assumed `root=` partition (~14 days lost, falsified by `lsblk`), an assumed built-in PCIe driver (~7 days, falsified by `find /lib/modules`), an assumed write-protected stick (~30 days, falsified by `blockdev --getro`), an assumed firmware generation (~3 days, falsified by reading the device tree), an assumed stable USB device node (~50 days and one 16GB data-drive overwrite, falsified by `lsblk -o NAME,SERIAL,SIZE`). Run `help -b`, `map -r`, `ls`, and `cat` *before* forming a theory; the hardware reveals the truth faster than any mental model.
@@ -101,7 +101,7 @@ When the USB debug console is dead, the 12-pin **J14 button header** on the carr
 | 4 | `UART2_RXD` | Input | Wire from **adapter TXD** → Jetson receives keystrokes |
 | 8 | `SYS_RESET_N` | Input | Active-low hardware reset; momentary short to GND reboots the board |
 | 10 | `FORCE_RECOVERY_N` | Input | Active-low bootROM strap: hold low across power-on to enter USB Recovery Mode (RCM) |
-| 11 | `GND` | — | Common ground → adapter ground |
+| 11 | `GND` |—| Common ground → adapter ground |
 | 12 | `PWR_BTN_N` | Input | Active-low power/sleep control |
 
 Terminal settings: `115200` baud, 8 data bits, no parity, 1 stop bit (`115200 8N1`), hardware flow control **off**. The Force Recovery jumper procedure (pins 9–10 or 10–11 during power-on, removable after the state latches) and the host-side `lsusb` check for the APX device (`0955:7020`) are covered in [Tier 2's RCM section](#hardware-force-recovery-mode-rcm-and-out-of-band-flashing).
@@ -445,10 +445,10 @@ Shell> dmpstore -d Boot000A
 
 #### In-Band Restoration via efivarfs (Recovery Kernel Shell)
 
-When the board reaches the **L4T Recovery Kernel Shell** (`bash-5.1#` on serial) instead of the UEFI Shell, the same slot-state variables can be repaired from Linux through **efivarfs** — no UEFI interaction required. Two non-obvious mechanics matter:
+When the board reaches the **L4T Recovery Kernel Shell** (`bash-5.1#` on serial) instead of the UEFI Shell, the same slot-state variables can be repaired from Linux through **efivarfs**—no UEFI interaction required. Two non-obvious mechanics matter:
 
 1. The Linux kernel marks these non-standard EFI variables **immutable** by default; `chattr -i` must precede any write.
-2. efivarfs writes require the 4-byte little-endian attribute mask (`EFI_VARIABLE_NON_VOLATILE | BOOTSERVICE_ACCESS | RUNTIME_ACCESS` = `\x07\x00\x00\x00`) prepended to the payload — an 8-byte write total.
+2. efivarfs writes require the 4-byte little-endian attribute mask (`EFI_VARIABLE_NON_VOLATILE | BOOTSERVICE_ACCESS | RUNTIME_ACCESS` = `\x07\x00\x00\x00`) prepended to the payload—an 8-byte write total.
 
 ```bash
 # 1. Mount the EFI variable filesystem
@@ -483,7 +483,7 @@ umount /sys/firmware/efi/efivars
 reboot -f
 ```
 
-This in-band path is often the fastest exit from a persistent recovery loop: the recovery flags live in NVRAM, so they survive disk fixes until explicitly cleared — clearing them here (rather than re-flashing) restores the normal boot chain with the rootfs untouched.
+This in-band path is often the fastest exit from a persistent recovery loop: the recovery flags live in NVRAM, so they survive disk fixes until explicitly cleared—clearing them here (rather than re-flashing) restores the normal boot chain with the rootfs untouched.
 
 The NVIDIA variable schemas used here (`RootfsStatusSlotA`/`RootfsStatusSlotB`, `L4TDefaultBootMode`, GUID `781e084c-a330-417c-b678-38e696380cb9`) and the efivarfs restoration procedure are documented in the [UEFI Adaptation guide (r39.2.1)](https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/SD/Bootloader/UEFI.html). Capsule staging behavior (including `FmpCapsuleSinglePartitionChain` and `/EFI/UpdateCapsule/` payloads) is specified in the [Capsule Update documentation](https://github.com/NVIDIA/edk2-nvidia/blob/r39.2.1/Silicon/NVIDIA/Library/FmpDeviceLib/CapsuleUpdateJetson.md).
 
@@ -499,7 +499,7 @@ When firmware faults, QSPI corruption, PKC signature asserts, or a dead bootload
 2. Jumper **FORCE_RECOVERY_N to GND** on the J14 header (pins 9–10 or 10–11; see the pin table in Tier 1 §1).
 3. Connect a USB-C data cable from the kit's USB-C port to a USB 3.0 port on the host workstation.
 4. Reconnect DC power.
-5. Remove the jumper — the recovery state latches at reset release; continuous grounding is unnecessary.
+5. Remove the jumper—the recovery state latches at reset release; continuous grounding is unnecessary.
 
 #### Host-Side Verification and Flashing
 
@@ -510,18 +510,18 @@ lsusb | grep -i "NVIDIA Corp."
 # Expected: Bus 001 Device 015: ID 0955:7020 NVIDIA Corp. APX
 ```
 
-- **If APX enumerates**: the SoC and bootROM are alive — the fault is in QSPI/UEFI/OS layers, all recoverable by flashing. Repair QSPI while preserving the NVMe rootfs:
+- **If APX enumerates**: the SoC and bootROM are alive—the fault is in QSPI/UEFI/OS layers, all recoverable by flashing. Repair QSPI while preserving the NVMe rootfs:
 
   ```bash
   cd ${JETPACK_PATH}/Linux_for_Tegra
   sudo ./flash.sh --no-flash-rootfs jetson-orin-nano-devkit-super internal
   ```
 
-- **If APX does not enumerate**: suspect carrier power sequencing, rail faults, or a physically blank QSPI — inspect power delivery before assuming flashable hardware. (Also note: JetPack 7.2.x flashing commands must name the `jetson-orin-nano-devkit-super` board config per the [Scope section](#scope-and-platform-baseline-jetpack-72x-only).)
+- **If APX does not enumerate**: suspect carrier power sequencing, rail faults, or a physically blank QSPI—inspect power delivery before assuming flashable hardware. (Also note: JetPack 7.2.x flashing commands must name the `jetson-orin-nano-devkit-super` board config per the [Scope section](#scope-and-platform-baseline-jetpack-72x-only).)
 
 #### Where RCM sits in the triage order
 
-RCM is the **Tier 0 row 1** escalation: it is the *only* tool that works when the firmware layer itself is the casualty, and it is the *last* tool to reach for otherwise — a full flash rewrites QSPI and discards the local state that the earlier tiers exist to diagnose and preserve. Exhaust `map`/`bcfg`/ESC-menu/efivarfs first; fall to RCM when the firmware can no longer execute anything you hand it.
+RCM is the **Tier 0 row 1** escalation: it is the *only* tool that works when the firmware layer itself is the casualty, and it is the *last* tool to reach for otherwise—a full flash rewrites QSPI and discards the local state that the earlier tiers exist to diagnose and preserve. Exhaust `map`/`bcfg`/ESC-menu/efivarfs first; fall to RCM when the firmware can no longer execute anything you hand it.
 
 ---
 

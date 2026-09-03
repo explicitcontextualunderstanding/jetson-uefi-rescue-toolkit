@@ -56,9 +56,9 @@ Curated external references that ground this repository's firmware architecture,
 
   Authoritative source for the probe order behind `Android image header not seen` (extlinux.conf → GRUB → Android recovery header) and the `EFI_UNSUPPORTED` refusal path discussed in Tier 2 §2.
 
-- [Jetson Orin Nano — Persistent Recovery Boot Failure with Multiple JetPack Versions (NVIDIA forums)](https://forums.developer.nvidia.com/t/jetson-orin-nano-persistent-recovery-boot-failure-with-multiple-jetpack-versions/347683)
+- [Jetson Orin Nano—Persistent Recovery Boot Failure with Multiple JetPack Versions (NVIDIA forums)](https://forums.developer.nvidia.com/t/jetson-orin-nano-persistent-recovery-boot-failure-with-multiple-jetpack-versions/347683)
 
-  Field thread (JetPack 5/6-era Orin) documenting the persistent recovery loop caused by stale slot-status variables. The variable semantics and the efivarfs restoration recipe are unchanged on the JetPack 7.2.x baseline — the mechanism is identical, the thread predates it.
+  Field thread (JetPack 5/6-era Orin) documenting the persistent recovery loop caused by stale slot-status variables. The variable semantics and the efivarfs restoration recipe are unchanged on the JetPack 7.2.x baseline—the mechanism is identical, the thread predates it.
 
 - [Boot Assertion and Reset to Recovery by Jetson UEFI (NVIDIA forums)](https://forums.developer.nvidia.com/t/boot-assertion-and-reset-to-recovery-by-jetson-uefi/279461)
 
@@ -66,4 +66,4 @@ Curated external references that ground this repository's firmware architecture,
 
 - [failing boot retry count requires hard flash · Issue #22 (NVIDIA/edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/issues/22)
 
-  Maintainer acknowledgment that an exhausted boot retry budget historically required a hard flash — context for why the ESC-menu / efivarfs quarantine-clear paths matter. The issue's observations predate JetPack 7.2.x; the quarantine-clear alternatives this tutorial documents are the version-current answer.
+  Maintainer acknowledgment that an exhausted boot retry budget historically required a hard flash—context for why the ESC-menu / efivarfs quarantine-clear paths matter. The issue's observations predate JetPack 7.2.x; the quarantine-clear alternatives this tutorial documents are the version-current answer.

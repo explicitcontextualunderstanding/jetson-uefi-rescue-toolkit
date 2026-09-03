@@ -21,6 +21,8 @@ Bootloader
 bootloader
 Bootloaders
 bootloaders
+bootROM
+bootROM's
 BPB
 bringup
 buildah
@@ -87,6 +89,7 @@ extlinux
 extraPaths
 FAT32
 fi
+flashable
 formatters
 Frontmatter
 frontmatter
@@ -156,6 +159,7 @@ monorepo
 Monorepos
 monorepos
 mv
+namespace
 Nano
 nano1
 nano2
@@ -191,6 +195,7 @@ pinout
 pinouts
 Podman
 postinst
+prepended
 preprocess
 Prereqs
 Prisma
@@ -244,6 +249,7 @@ Subiquity
 substring
 substrings
 sudo
+switch_root
 Systemd
 systemd
 Tegra
@@ -272,6 +278,8 @@ unpowered
 untracked
 URIs
 usbmodem
+userland
+userspace
 UUID
 uv
 Validator
