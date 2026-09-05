@@ -54,6 +54,7 @@ dev
 devcontainer
 device-tree
 devtree
+devkit
 dh
 dirs
 dmem
@@ -163,6 +164,7 @@ namespace
 Nano
 nano1
 nano2
+Nanos
 netavark
 Netplan
 netplan
@@ -293,6 +295,7 @@ Walkthrough
 walkthrough
 Walkthroughs
 XSkill
+Yocto
 yamllint
 YAMLs
 Zot
