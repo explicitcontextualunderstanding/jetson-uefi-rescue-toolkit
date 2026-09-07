@@ -40,12 +40,12 @@ Before touching any tool, answer one question: **which layer of the stack is bro
 
 | # | Layer | Observable symptom | Fastest discriminator | Decisive tool | Section |
 |---|---|---|---|---|---|
-| 1 | **Power / carrier hardware** | Fan never spins, no serial output, display dark, no USB enumeration | Hold FORCE_RECOVERY jumper while powering; watch `lsusb` on the host | Host `lsusb` looking for `0955:7020` (APX) | [RCM](#hardware-force-recovery-mode-rcm-and-out-of-band-flashing) |
+| 1 | **Power / carrier hardware** | Fan never spins, no serial output, display dark, no USB enumeration | Hold FORCE_RECOVERY jumper while powering; watch `lsusb` on the host | Host `lsusb` looking for `0955:7020` (APX) | [RCM](#5-last-resort-hardware-force-recovery-mode-rcm--out-of-band-flashing) |
 | 2 | **Firmware (QSPI/UEFI)** | Drops to `Shell>` with an `ASSERT`, or `LoadImage` refuses a verified-valid ARM64 binary on a readable FS | Binary verifies (PE header, 0xAA64) but firmware refuses it → firmware-level rejection, not media | UEFI Shell `map -r` + ESC Setup quarantine clear | [Tier 2 §2](#2-when-the-firmware-refuses-a-valid-binary-efi_unsupported) |
 | 3 | **Boot configuration (ESP content)** | `Shell>` drop without ASSERT; `BOOTAA64.EFI` runs but `L4TLauncher` prints `Android image header not seen` | `BOOTAA64.EFI` executed fine → launcher found no `extlinux.conf`/`grubaa64.efi` next to it | UEFI Shell `ls \EFI\BOOT` + staging `grubaa64.efi`/`grub.cfg` | [Tier 2 §1](#1-jetson-firmware-boot-pipeline--mental-model) |
 | 4 | **Filesystem (rootfs)** | Launcher or GRUB starts the kernel but mount of the root filesystem fails (or `L4TLauncher` falls back to recovery) | PARTLABEL/GUID correct but Ext4Dxe (firmware) or kernel ext4 cannot mount → suspect dirty journal or feature flags beyond the firmware's driver | `e2fsck -fy` from a live/rescue environment; inspect with `tune2fs -l` | [Tier 2 §3](#3-direct-linux-kernel-execution-via-efi-stub) |
 | 5 | **Kernel / device tree** | Kernel starts (serial prints `Linux version`) then panics or hangs before userspace | Serial console output: panic text names the failing subsystem (for example, HSP mailbox mismatch = kernel/firmware generation skew) | Direct EFI-stub kernel launch with explicit `console=` to separate kernel from bootloader | [Tier 2 §3](#3-direct-linux-kernel-execution-via-efi-stub) |
-| 6 | **OS configuration (userland)** | Kernel boots, switch_root fails, services fail, or SSH never appears | `systemd` reached userspace → the problem is inside the rootfs, not below it | Recovery/rescue shell; inspect `/var/log`, `systemctl`, `dpkg --audit` | [Recovery kernel](#the-recovery-kernel-shell-and-efi-variable-restoration) |
+| 6 | **OS configuration (userland)** | Kernel boots, switch_root fails, services fail, or SSH never appears | `systemd` reached userspace → the problem is inside the rootfs, not below it | Recovery/rescue shell; inspect `/var/log`, `systemctl`, `dpkg --audit` | [Recovery kernel](#in-band-restoration-via-efivarfs-recovery-kernel-shell) |
 
 Three worked discriminators from a real recovery (field-verified on an Orin Nano, JetPack 7.2.1):
 
@@ -104,7 +104,7 @@ When the USB debug console is dead, the 12-pin **J14 button header** on the carr
 | 11 | `GND` |—| Common ground → adapter ground |
 | 12 | `PWR_BTN_N` | Input | Active-low power/sleep control |
 
-Terminal settings: `115200` baud, 8 data bits, no parity, 1 stop bit (`115200 8N1`), hardware flow control **off**. The Force Recovery jumper procedure (pins 9–10 or 10–11 during power-on, removable after the state latches) and the host-side `lsusb` check for the APX device (`0955:7020`) are covered in [Tier 2's RCM section](#hardware-force-recovery-mode-rcm-and-out-of-band-flashing).
+Terminal settings: `115200` baud, 8 data bits, no parity, 1 stop bit (`115200 8N1`), hardware flow control **off**. The Force Recovery jumper procedure (pins 9–10 or 10–11 during power-on, removable after the state latches) and the host-side `lsusb` check for the APX device (`0955:7020`) are covered in [Tier 2's RCM section](#5-last-resort-hardware-force-recovery-mode-rcm--out-of-band-flashing).
 
 For adapter wiring technique (3.3V TTL, cross-wired TXD/RXD, no power lead), see the [JetsonHacks serial console walkthrough](https://jetsonhacks.com/2019/04/19/jetson-nano-serial-console/) in [docs/references.md](references.md).
 

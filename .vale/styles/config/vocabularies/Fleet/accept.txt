@@ -13,6 +13,7 @@ backdoors
 balenaEtcher
 bashrc
 bcfg
+bitmask
 BkBootSec
 BLKx
 BOOTAA64
@@ -71,6 +72,7 @@ EDID
 EDK2
 EDKII
 EEPROM
+EEPROMs
 EFI
 efi
 eficompress
@@ -92,6 +94,7 @@ FAT32
 fi
 flashable
 formatters
+framebuffer
 Frontmatter
 frontmatter
 FSInfoSec
@@ -101,6 +104,7 @@ Fv
 gcloud
 getmtc
 gitignored
+getty
 goto
 GPT
 GRUB
@@ -145,6 +149,7 @@ kyberpunk
 L4T
 L4TLauncher
 L4tLauncher
+LEDs
 loadpcirom
 localstack
 Lookups
@@ -193,6 +198,7 @@ peer_id
 pg_trgm
 pgvector
 ping6
+pinmux
 pinout
 pinouts
 Podman
@@ -247,6 +253,7 @@ stdin
 stdout
 subcommand
 subcommands
+subnet
 Subiquity
 substring
 substrings
@@ -283,6 +290,7 @@ usbmodem
 userland
 userspace
 UUID
+UUIDs
 uv
 Validator
 validator
