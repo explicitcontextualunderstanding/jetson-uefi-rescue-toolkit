@@ -526,5 +526,5 @@ Use this quick-reference table to diagnose and resolve wireless bring-up failure
 ## Technical grounding and external references
 
 - [morrownr/rtw89 Driver Repository](https://github.com/morrownr/rtw89): Linux driver source for Realtek 802.11ax and 802.11be wireless adapters.
-- [Seeed Studio Jetson JetPack 7.2 WiFi Wiki](https://wiki.seeedstudio.com/reComputer_Jetson_JetPack_7_2/): Documents the platform-wide firmware `.zst` decompression requirement and provides prebuilt M.2 kernel modules.
+- [Seeed Studio Jetson JetPack 7.2 WiFi Wiki](https://wiki.seeedstudio.com/jetpack72_ax210_ax200_wifi_setup_guide/): Documents the platform-wide firmware `.zst` decompression requirement and provides prebuilt M.2 kernel modules.
 - [NVIDIA Jetson Linux Developer Guide (r39.2.1)](https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/SD/Bootloader/UEFI.html): Authoritative documentation for the JetPack 7.2.x kernel and firmware environment.

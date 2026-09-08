@@ -76,7 +76,7 @@ Curated external references that ground this repository's firmware architecture,
 
   Active out-of-tree Linux driver tree supporting Realtek 802.11ax and 802.11be wireless chipsets (including RTL8912AU and RTL8922AU USB adapters). Grounds the compilation procedures and USB-storage quirk configurations in the [WiFi 7 Tutorial](wifi7-adapters-jetpack-7-2.md).
 
-- [reComputer JetPack 7.2 WiFi Guide (Seeed Studio Wiki)](https://wiki.seeedstudio.com/reComputer_Jetson_JetPack_7_2/)
+- [JetPack 7.2 AX210/AX200 WiFi Setup Guide (Seeed Studio Wiki)](https://wiki.seeedstudio.com/jetpack72_ax210_ax200_wifi_setup_guide/)
 
   Field documentation detailing wireless bring-up on JetPack 7.2 (`6.8.12-1021-tegra`), including the platform-wide firmware `.zst` decompression requirement, prebuilt `.ko` module distribution for Realtek RTL8852BE, and the `apt-mark hold` kernel stabilization recommendation.
 
