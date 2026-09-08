@@ -411,6 +411,15 @@ li { margin-bottom: 4px; line-height: 1.6; }
         (<code>file -s</code>, <code>blkid</code>). Unverified assumptions caused 55
         days of downtime in that window.
       </div>
+
+      <div class="callout tip" style="margin-top:8px; font-size:14px;">
+        <b>RCM provisioning (tonight):</b> The documented FC REC pin mapping did not match
+        the silk-screen on the Orin Nano Developer Kit—pin-by-label vs. pin-by-number
+        produced two failed jumper attempts. Device enumeration triad
+        <code>0955:7020</code> (APX in RCM) vs. <code>7523</code> (tegraflash USB) vs.
+        the running-OS gadget confirmed whether the board was in RCM hardware mode or USB-loader mode.
+        The sibling's "45G no backup" alarm was falsified by probing the whole host.
+      </div>
     </div>
     <div class="footer">
       <span>Jetson UEFI Rescue Toolkit</span>
@@ -487,6 +496,14 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
         kernel log). Higher layers stay suspect. Lower layers are ruled out.
         Each layer has its own failure signature.
       </div>
+
+      <div class="callout tip" style="margin-top:8px; font-size:14px;">
+        <b>RCM provisioning (tonight):</b> Failures stratified by layer—USB-transport failures
+        (<code>tegrarcm</code> layer), missing host tools (MBA userspace), missing rootfs deps
+        (rootfs layer), RCM strap timing (Layer 1). Each was diagnosed by asking "what is the
+        highest layer producing output?"—serial silence meant Layer 1 (RCM strap) or Layer 2
+        was the active suspect domain.
+      </div>
     </div>
     <div class="footer">
       <span>Jetson UEFI Rescue Toolkit</span>
@@ -555,6 +572,13 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
         normally while the monitor stays dark.
       </div>
 
+      <ul style="font-size:13px; margin-top:6px;">
+        <li><b>RCM provisioning (tonight):</b> The board was in RCM while the user unplugged it
+            believing it was dead—serial silence was the success signal. Silence = RCM mode active.</li>
+        <li><b>Visual non-evidence:</b> The Tegraflash USB enumeration (device ID <code>7523</code>)
+            is the only reliable RCM indicator until the APX device (<code>0955:7020</code>) appears.</li>
+      </ul>
+
       <h3>Non-visual diagnostic ladder:</h3>
       <ol>
         <li><b>Physical link:</b> Check Ethernet switch LEDs → <code class="bg">arp -an</code> / <code class="bg">ping &lt;ip&gt;</code>—distinguish powered-down vs. unbootable</li>
@@ -583,11 +607,18 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
         <div>
           <h3>6. Board Identity: Paperwork ≠ Silicon</h3>
           <p>
-            Jetson identity is the <code class="bg">COMPATIBLE_SPEC</code> string in
+            Jetson identity is the <code class="bg">compatible_spec</code> string in
             <code class="bg">/etc/nv_boot_control.conf</code> and the
             <code class="bg">TegraPlatformCompatSpec</code> variable. I2C (Inter-Integrated Circuit) EEPROM (electrically erasable programmable read-only memory) read
             timeouts during flashing cause fallback to wrong strings (Orin NX on Orin
             Nano Super), breaking <code class="bg">nvidia-l4t-bootloader</code> upgrades.
+          </p>
+
+          <p style="font-size:13px; margin-top:6px;">
+            <b>RCM provisioning (tonight):</b> The identity layer was healthy —
+            <code>compatible_spec</code> parsed as <code>3767--0005--1--jetson-orin-nano-devkit-super-</code>,
+            EEPROM golden serial matched Plan 52, FAB=300 passing the super guard.
+            No identity mismatch, so the boot-control layer was ruled out.
           </p>
           <p><b>Correction (no SPI re-flashing needed):</b></p>
           <ol style="font-size:14px;">
