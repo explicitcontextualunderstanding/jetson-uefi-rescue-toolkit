@@ -352,9 +352,9 @@ li { margin-bottom: 4px; line-height: 1.6; }
       <h1>Reasoning Before Commands<br>
         Seven First Principles of Jetson UEFI Recovery</h1>
       <p style="font-size:18px; max-width:640px; margin:0 auto;">
-        In embedded system recovery, the cost of a wrong assumption is measured in days
-        of fleet downtime. These seven principles are the decision framework that
-        separates field engineers who waste weeks from those who resolve in minutes.
+        Wrong assumptions in embedded recovery consume days of fleet downtime. These seven
+        principles form a decision framework: they separate engineers who waste weeks from
+        those who resolve in minutes.
       </p>
       <div style="margin-top:32px; font-family:var(--mono); font-size:13px; color:var(--gray-500);">
         5-minute presentation · one principle per slide
@@ -408,8 +408,8 @@ li { margin-bottom: 4px; line-height: 1.6; }
         <code>mkfs</code>, <code>setvar -d</code>), verify: (1) device existence
         (<code>lsblk -dn -o SIZE -b /dev/sdX</code>), (2) serial identity
         (<code>/dev/disk/by-id/</code>), (3) filesystem signatures
-        (<code>file -s</code>, <code>blkid</code>). 55 days of downtime were
-        unverified assumptions.
+        (<code>file -s</code>, <code>blkid</code>). Unverified assumptions caused 55
+        days of downtime in that window.
       </div>
     </div>
     <div class="footer">
@@ -439,7 +439,7 @@ li { margin-bottom: 4px; line-height: 1.6; }
       <ul>
         <li><code class="bg">FS0:</code>/<code class="bg">FS1:</code> typically = internal firmware volumes (<code>Fv(...)</code>), <b>not</b> storage media</li>
         <li>A rescue thumbdrive may be <code class="bg">FS4:</code> NVMe-attached, but shift to <code class="bg">FS0:</code> if you remove storage drives</li>
-        <li>Hardcoding <code>FS4: → FS2:</code> without re-verification overwrites unintended partitions</li>
+        <li>hard-coding <code>FS4: → FS2:</code> without re-verification overwrites unintended partitions</li>
       </ul>
 
       <h3>The shell navigation protocol:</h3>
@@ -467,25 +467,25 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
       <h1>Decoupling the Five-Layer Boot Pipeline</h1>
       <p>
         The Jetson boot is a relay across five independent execution environments.
-        <b>A failure at one layer cannot be resolved by manipulating a different layer.</b>
+        <b>You cannot resolve a failure at one layer by manipulating a different layer.</b>
       </p>
 
       <div class="pipeline">
-        <div class="pipe-stage"><span class="num">1</span>Hardware &amp; BootROM — FORCE_RECOVERY_N strap (J14), APX <code class="bg">0955:7020</code></div>
+        <div class="pipe-stage"><span class="num">1</span>Hardware &amp; BootROM—FORCE_RECOVERY_N strap (J14), APX <code class="bg">0955:7020</code></div>
         <div class="pipe-arrow">▼</div>
-        <div class="pipe-stage"><span class="num">2</span>QSPI UEFI — TianoCore EDK II, NVRAM variable quarantine (Slot A/B retry threshold)</div>
+        <div class="pipe-stage"><span class="num">2</span>QSPI UEFI—TianoCore EDK II, NVRAM variable quarantine (Slot A/B retry threshold)</div>
         <div class="pipe-arrow">▼</div>
-        <div class="pipe-stage"><span class="num">3</span>ESP Bootloader — <code class="bg">BOOTAA64.EFI</code> → <code class="bg">extlinux.conf</code> → <code class="bg">grubaa64.efi</code></div>
+        <div class="pipe-stage"><span class="num">3</span>ESP Bootloader—<code class="bg">BOOTAA64.EFI</code> → <code class="bg">extlinux.conf</code> → <code class="bg">grubaa64.efi</code></div>
         <div class="pipe-arrow">▼</div>
-        <div class="pipe-stage"><span class="num">4</span>Linux Kernel — EFI stub, <code class="bg">console=ttyTCU0</code>, DTB</div>
+        <div class="pipe-stage"><span class="num">4</span>Linux Kernel—EFI stub, <code class="bg">console=ttyTCU0</code>, DTB</div>
         <div class="pipe-arrow">▼</div>
-        <div class="pipe-stage"><span class="num">5</span>OS Userspace — systemd, network, display manager</div>
+        <div class="pipe-stage"><span class="num">5</span>OS Userspace—systemd, network, display manager</div>
       </div>
 
       <div class="callout tip">
-        <b>Diagnostic rule:</b> Identify the highest layer that produces output
-        (serial, USB enum, EFI shell, kernel log). All higher layers are suspect;
-        all lower layers are ruled out. Each layer has its own failure signature.
+        <b>Diagnostic rule:</b> Identify the highest layer that produces output (serial, USB enumeration, EFI shell,
+        kernel log). Higher layers stay suspect. Lower layers are ruled out.
+        Each layer has its own failure signature.
       </div>
     </div>
     <div class="footer">
@@ -508,16 +508,16 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
         UEFI NVRAM boot entries bind to partition unique GUIDs (<code class="bg">PARTUUID</code>)
         rather than partition indices or device names. When an OS installer regenerates
         the GPT partition table, <b>existing boot entries silently point to nothing</b>
-        — firmware skips them without error and falls through to PXE or <code class="bg">Shell></code>.
+       —firmware skips them without error and falls through to PXE or <code class="bg">Shell></code>.
       </div>
 
       <div class="asym-table">
         <div class="asym-box h3">
           <h3>Detection (3 steps)</h3>
           <ol>
-            <li>Inspect live partition GUID: <code class="bg">map -r</code> — note GUID in <code>HD(n,GPT,&lt;GUID&gt;,...)</code></li>
+            <li>Inspect live partition GUID: <code class="bg">map -r</code>—note GUID in <code>HD(n,GPT,&lt;GUID&gt;,...)</code></li>
             <li>Compare against NVRAM: <code class="bg">bcfg boot dump</code></li>
-            <li>Check for mismatch — firmware falls through silently</li>
+            <li>Check for mismatch—firmware falls through silently</li>
           </ol>
         </div>
         <div class="asym-box h4">
@@ -556,10 +556,10 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
 
       <h3>Non-visual diagnostic ladder:</h3>
       <ol>
-        <li><b>Physical link:</b> Check Ethernet switch LEDs → <code class="bg">arp -an</code> / <code class="bg">ping &lt;ip&gt;</code> — distinguish powered-down vs. unbootable</li>
-        <li><b>Fleet SSH:</b> <code class="bg">ssh root@&lt;ip&gt;</code> — if SSH connects, userspace is live</li>
-        <li><b>VT switch:</b> <code class="bg">Ctrl+Alt+F2</code>–<code class="bg">F6</code> — spawn text getty, bypassing crashed graphics</li>
-        <li><b>Serial console:</b> Micro-USB/J14 UART (<code class="bg">ttyTCU0</code>, 115200 8N1) — unbuffered hardware output from BootROM through kernel</li>
+        <li><b>Physical link:</b> Check Ethernet switch LEDs → <code class="bg">arp -an</code> / <code class="bg">ping &lt;ip&gt;</code>—distinguish powered-down vs. unbootable</li>
+        <li><b>Fleet SSH:</b> <code class="bg">ssh root@&lt;ip&gt;</code>—if SSH connects, userspace is live</li>
+        <li><b>VT switch:</b> <code class="bg">Ctrl+Alt+F2</code>–<code class="bg">F6</code>—spawn text getty, bypassing crashed graphics</li>
+        <li><b>Serial console:</b> Micro-USB/J14 UART (<code class="bg">ttyTCU0</code>, 115200 8N1)—unbuffered hardware output from BootROM through kernel</li>
       </ol>
     </div>
     <div class="footer">
@@ -588,7 +588,7 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
             timeouts during flashing cause fallback to wrong strings (Orin NX on Orin
             Nano Super), breaking <code class="bg">nvidia-l4t-bootloader</code> upgrades.
           </p>
-          <p><b>Correction (no SPI reflashing needed):</b></p>
+          <p><b>Correction (no SPI re-flashing needed):</b></p>
           <ol style="font-size:14px;">
             <li>Fix <code class="bg">/etc/nv_boot_control.conf</code> to match hardware</li>
             <li><code class="bg">dpkg --configure -a</code> or run the post-install script</li>
@@ -619,15 +619,15 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
           </div>
 
           <div class="callout tip" style="margin-top:12px; font-size:13px;">
-            <b>Failure in QEMU → diagnostic for hardware.</b>
-            <b>Success in QEMU → proves media only.</b> Never deploy rescue
-            media to remote fleets without physical validation boot.
+          <b>A failure in QEMU diagnoses hardware.</b>
+          <b>A success in QEMU proves the media only.</b> Never deploy rescue
+          media to remote fleets without a physical validation boot.
           </div>
         </div>
       </div>
     </div>
     <div class="footer">
-      <span>Jetson UEFI Rescue Toolkit — JetPack 7.2.x (r39.2.x)</span>
+      <span>Jetson UEFI Rescue Toolkit—JetPack 7.2.x (r39.2.x)</span>
       <span class="slide-counter">7 of 7</span>
     </div>
   </section>
