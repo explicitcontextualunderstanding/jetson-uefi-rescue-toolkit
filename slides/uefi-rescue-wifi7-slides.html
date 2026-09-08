@@ -471,13 +471,13 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
       </p>
 
       <div class="pipeline">
-        <div class="pipe-stage"><span class="num">1</span>Hardware &amp; BootROM—FORCE_RECOVERY_N strap (J14), APX <code class="bg">0955:7020</code></div>
+        <div class="pipe-stage"><span class="num">1</span>Hardware &amp; BootROM (read-only memory)—FORCE_RECOVERY_N strap (J14), APX (Application Processor) <code class="bg">0955:7020</code></div>
         <div class="pipe-arrow">▼</div>
-        <div class="pipe-stage"><span class="num">2</span>QSPI UEFI—TianoCore EDK II, NVRAM variable quarantine (Slot A/B retry threshold)</div>
+        <div class="pipe-stage"><span class="num">2</span>QSPI (Quad SPI) UEFI (Unified Extensible Firmware Interface), TianoCore EDK II, NVRAM (non-volatile RAM) variable quarantine (Slot A/B retry threshold)</div>
         <div class="pipe-arrow">▼</div>
-        <div class="pipe-stage"><span class="num">3</span>ESP Bootloader—<code class="bg">BOOTAA64.EFI</code> → <code class="bg">extlinux.conf</code> → <code class="bg">grubaa64.efi</code></div>
+        <div class="pipe-stage"><span class="num">3</span>ESP (EFI System Partition) Bootloader—<code class="bg">BOOTAA64.EFI</code> → <code class="bg">extlinux.conf</code> → <code class="bg">grubaa64.efi</code></div>
         <div class="pipe-arrow">▼</div>
-        <div class="pipe-stage"><span class="num">4</span>Linux Kernel—EFI stub, <code class="bg">console=ttyTCU0</code>, DTB</div>
+        <div class="pipe-stage"><span class="num">4</span>Linux Kernel—EFI stub, <code class="bg">console=ttyTCU0</code>, DTB (device tree blob)</div>
         <div class="pipe-arrow">▼</div>
         <div class="pipe-stage"><span class="num">5</span>OS Userspace—systemd, network, display manager</div>
       </div>
@@ -505,10 +505,11 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
       <h1>GUID Drift and Silent Boot Invalidation</h1>
 
       <div class="callout warning">
-        UEFI NVRAM boot entries bind to partition unique GUIDs (<code class="bg">PARTUUID</code>)
+        UEFI NVRAM (non-volatile RAM) boot entries bind to partition unique GUIDs (<code class="bg">PARTUUID</code>)
         rather than partition indices or device names. When an OS installer regenerates
         the GPT partition table, <b>existing boot entries silently point to nothing</b>
-       —firmware skips them without error and falls through to PXE or <code class="bg">Shell></code>.
+        —firmware skips them without error and falls through to PXE (Preboot Execution
+        Environment) or <code class="bg">Shell></code>.
       </div>
 
       <div class="asym-table">
@@ -558,8 +559,8 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
       <ol>
         <li><b>Physical link:</b> Check Ethernet switch LEDs → <code class="bg">arp -an</code> / <code class="bg">ping &lt;ip&gt;</code>—distinguish powered-down vs. unbootable</li>
         <li><b>Fleet SSH:</b> <code class="bg">ssh root@&lt;ip&gt;</code>—if SSH connects, userspace is live</li>
-        <li><b>VT switch:</b> <code class="bg">Ctrl+Alt+F2</code>–<code class="bg">F6</code>—spawn text getty, bypassing crashed graphics</li>
-        <li><b>Serial console:</b> Micro-USB/J14 UART (<code class="bg">ttyTCU0</code>, 115200 8N1)—unbuffered hardware output from BootROM through kernel</li>
+        <li><b>VT (virtual terminal) switch:</b> <code class="bg">Ctrl+Alt+F2</code>–<code class="bg">F6</code>—spawn text getty, bypassing crashed graphics</li>
+        <li><b>Serial console:</b> Micro-USB/J14 UART (Universal Asynchronous Receiver-Transmitter) (<code class="bg">ttyTCU0</code>, 115200 8N1)—unbuffered hardware output from BootROM through kernel</li>
       </ol>
     </div>
     <div class="footer">
@@ -584,11 +585,11 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
           <p>
             Jetson identity is the <code class="bg">COMPATIBLE_SPEC</code> string in
             <code class="bg">/etc/nv_boot_control.conf</code> and the
-            <code class="bg">TegraPlatformCompatSpec</code> variable. I2C EEPROM read
+            <code class="bg">TegraPlatformCompatSpec</code> variable. I2C (Inter-Integrated Circuit) EEPROM read
             timeouts during flashing cause fallback to wrong strings (Orin NX on Orin
             Nano Super), breaking <code class="bg">nvidia-l4t-bootloader</code> upgrades.
           </p>
-          <p><b>Correction (no SPI re-flashing needed):</b></p>
+          <p><b>Correction (no SPI (Serial Peripheral Interface) re-flashing needed):</b></p>
           <ol style="font-size:14px;">
             <li>Fix <code class="bg">/etc/nv_boot_control.conf</code> to match hardware</li>
             <li><code class="bg">dpkg --configure -a</code> or run the post-install script</li>

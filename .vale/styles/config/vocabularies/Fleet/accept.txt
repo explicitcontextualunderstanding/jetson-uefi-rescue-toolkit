@@ -98,6 +98,7 @@ EFI
 eficompress
 efidecompress
 EFISTUB
+Extensible
 efivarfs
 endfor
 endif
@@ -236,6 +237,8 @@ Orin
 parallelization
 params
 PARTUUID
+PXE
+Preboot
 pci
 PCIe
 PciRoot
