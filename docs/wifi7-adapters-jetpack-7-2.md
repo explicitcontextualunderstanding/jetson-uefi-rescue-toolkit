@@ -243,14 +243,14 @@ When outfitting a Jetson Orin Nano with WiFi 7, selecting between a USB adapter 
 
 ### Architectural verdict
 
-- **Choose USB for**: Rapid prototyping, bench experimentation, and environments requiring zero hardware teardown. For headless edge nodes (such as `nano1`), even if constrained to USB 2.0 bus rates (~400 Mbps), the adapter provides sufficient throughput for SSH consoles, telemetry ingestion, and container distribution.
+- **Choose USB for**: Rapid prototyping, bench experimentation, and environments requiring zero hardware teardown. For headless edge nodes, even if connected through a USB 2.0 hub, carrier header, or unshielded extension cable that negotiates HighSpeed rates (~400 Mbps), the adapter provides sufficient throughput for SSH consoles, telemetry ingestion, and container distribution.
 - **Choose PCIe/M.2 for**: Permanent production deployments, robotics chassis, and applications demanding sustained multi-gigabit throughput. The PCIe interface avoids USB host controller latency, provides secure antenna mounting via SMA chassis connectors, and avoids external USB cable snag risks.
 
 ---
 
-## Part 5: Worked example (the DE-BE6500 live walkthrough)
+## Part 5: Worked example (BE6500 USB adapter walkthrough)
 
-The following walkthrough documents the end-to-end deployment of a DE-BE6500 USB adapter (Realtek RTL8912AU silicon) on an NVIDIA Jetson Orin Nano (`nano1`) running JetPack 7.2 (`6.8.12-1021-tegra`).
+The following walkthrough documents the end-to-end deployment of a representative BE6500 USB adapter (tested on a DE-BE6500 unit with Realtek RTL8912AU silicon) on an NVIDIA Jetson Orin Nano Developer Kit running JetPack 7.2 (`6.8.12-1021-tegra`).
 
 ```text
 Deployment Sequence:
@@ -262,7 +262,7 @@ Deployment Sequence:
        │
 [Phase 3: Fix]   ──► Decompress rtw8922a_fw-4.bin.zst using unzstd
        │
-[Phase 4: Net]   ──► Interface wlan1 up; resolve polkit headless auth
+[Phase 4: Net]   ──► Interface up (wlan0/wlan1); resolve polkit headless auth
        │
 [Phase 5: Link]  ──► Negotiated link: 1080 Mbit/s (vs 526 Mbit/s legacy)
 ```
@@ -407,7 +407,7 @@ Check the network interface status:
 ip link show
 ```
 
-A new wireless interface (such as `wlan1` or `wlx001122334455`) appears in the interface list.
+A new wireless interface appears in the interface list (typically `wlan1` or `wlx001122334455` if an onboard M.2 wireless card is already present, or `wlan0` if the USB adapter is the sole wireless device).
 
 Scan for nearby wireless networks:
 
@@ -445,7 +445,7 @@ sudo nmcli dev wifi connect "MyNetworkSSID" password "SecretPassword"
 
 ### Phase 8: Multi-radio coexistence
 
-On developer kits with an existing M.2 wireless card (such as an onboard `rtl88x2ce` on `wlan0`), the new USB adapter registers as `wlan1`.
+On developer kits with an existing M.2 wireless card (such as an onboard `rtl88x2ce` on `wlan0`), the new USB adapter registers as `wlan1`. If your carrier board does not include an internal M.2 wireless card, the USB adapter claims `wlan0` as the sole wireless interface, and multi-radio coexistence is not required.
 
 Inspect physical radio devices:
 
@@ -468,18 +468,19 @@ Benchmarking multiple active wireless interfaces on an edge device introduces th
 The reliable way to test each wireless interface without disconnecting anything is socket-level device binding (`SO_BINDTODEVICE`). Using `iperf3` with the `-B` (bind) flag pins client traffic to a specific local interface IP while leaving all interfaces connected:
 
 ```bash
-# On the target server (for example, a secondary node on the same local subnet):
+# On the target iperf3 server (for example, a wired host or secondary node on the local subnet):
 iperf3 -s
 
-# On the Jetson under test, benchmark the PCIe interface:
+# On the Jetson under test:
+# Substitute your actual iperf3 server IP (e.g. 192.168.1.50)
+# and each local interface IP (e.g. 192.168.1.100 for PCIe wlan0, 192.168.1.102 for USB wlan1)
+
+# Benchmark the PCIe interface:
 iperf3 -c 192.168.1.50 -B 192.168.1.100 -t 10
 
 # Benchmark the USB WiFi 7 interface:
 iperf3 -c 192.168.1.50 -B 192.168.1.102 -t 10
 ```
-
-> [!NOTE]
-> If scripting benchmark commands across nodes, remember that running `sudo ssh` executes SSH as root, which lacks the user's SSH keys and fails authentication. Use `sudo -u "$SUDO_USER" ssh` or run the benchmark from an unprivileged terminal session.
 
 #### Empirical bench results
 
@@ -503,7 +504,7 @@ The USB adapter showed 40 retransmits and slight jitter during heavy bursts, whi
 Following manual verification, choose a persistence strategy:
 
 1. **DKMS registration**: Runs `sudo ./install-driver.sh` from the repository root. If DKMS fails at the module signing step, proceed with manual installation.
-2. **Manual module maintenance**: Retain the module in `/lib/modules/6.8.12-1021-tegra/extra/rtw89/`. Because the fleet doctrine enforces `sudo apt-mark hold nvidia-l4t-* linux-image-* linux-headers-*`, the kernel ABI remains stable, and the compiled module persists across reboots without recompilation.
+2. **Manual module maintenance**: Retain the module in `/lib/modules/6.8.12-1021-tegra/extra/rtw89/`. If you hold kernel packages with `sudo apt-mark hold nvidia-l4t-* linux-image-* linux-headers-*`, the kernel ABI remains stable, and the compiled module persists across reboots without recompilation.
 
 ### Phase 11: Benchmark script (reference implementation)
 
