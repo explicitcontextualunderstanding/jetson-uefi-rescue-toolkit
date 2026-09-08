@@ -393,3 +393,17 @@ zshrc
 zst
 Zstandard
 zstd
+Ashby
+Anduril
+Helsing
+Booz
+Droyd
+Pano
+Lightspeed
+Nexxa
+Middleware
+Balena
+Zenoh
+iceoryx
+agentic
+Simpler
