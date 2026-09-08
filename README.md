@@ -13,6 +13,7 @@ A field-tested toolkit and diagnostic runbook for recovering unbootable **NVIDIA
 This repository is structured for both human engineers and autonomous AI agents:
 
 - **For Human Engineers & Learning:** [**`docs/uefi-rescue-shell-tutorial.md`**](docs/uefi-rescue-shell-tutorial.md)—Exhaustive technical tutorial detailing Jetson EDK2 architecture, NVRAM variable mechanics, partition table pitfalls, and live recovery walk-throughs.
+- **For WiFi 7 & Wireless Integration:** [**`docs/wifi7-adapters-jetpack-7-2.md`**](docs/wifi7-adapters-jetpack-7-2.md)—Engineering guide and troubleshooting index for deploying WiFi 7 USB and PCIe adapters under JetPack 7.2 (kernel `6.8.12-1021-tegra`).
 - **For Foundational Principles:** [**`docs/first-principles.md`**](docs/first-principles.md)—Seven architectural invariants, failure boundaries, and diagnostic reasoning models derived from empirical recovery receipts.
 - **For Source Grounding & Verification:** [**`docs/references.md`**](docs/references.md)—Categorized external references (official NVIDIA documentation, EDK2 source repositories, engineering analysis and field guides) grounding the tutorial's firmware architecture and recovery procedures.
 - **For AI Agents & Collaborators:** [**`AGENTS.md`**](AGENTS.md)—Operational directives, system boundaries, and safety invariant rules (such as non-destructive probing before writes).
@@ -75,6 +76,8 @@ jetson-uefi-rescue-toolkit/
 ├── .vale/                              # Custom styles (Google, proselint) & Fleet vocabulary
 ├── docs/
 │   ├── uefi-rescue-shell-tutorial.md   # Full human-readable technical tutorial
+│   ├── wifi7-adapters-jetpack-7-2.md   # WiFi 7 USB and PCIe adapter deployment guide
+│   ├── first-principles.md             # Core architectural invariants & reasoning models
 │   └── references.md                   # Categorized external references (NVIDIA, EDK2, field guides)
 ├── .agents/
 │   └── skills/

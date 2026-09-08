@@ -67,3 +67,19 @@ Curated external references that ground this repository's firmware architecture,
 - [failing boot retry count requires hard flash · Issue #22 (NVIDIA/edk2-nvidia)](https://github.com/NVIDIA/edk2-nvidia/issues/22)
 
   Maintainer acknowledgment that an exhausted boot retry budget historically required a hard flash—context for why the ESC-menu / efivarfs quarantine-clear paths matter. The issue's observations predate JetPack 7.2.x; the quarantine-clear alternatives this tutorial documents are the version-current answer.
+
+---
+
+## 4. Wireless Networking and JetPack 7.2 Driver Architecture
+
+- [morrownr/rtw89 Linux Driver Repository](https://github.com/morrownr/rtw89)
+
+  Active out-of-tree Linux driver tree supporting Realtek 802.11ax and 802.11be wireless chipsets (including RTL8912AU and RTL8922AU USB adapters). Grounds the compilation procedures and USB-storage quirk configurations in the [WiFi 7 Tutorial](wifi7-adapters-jetpack-7-2.md).
+
+- [reComputer JetPack 7.2 WiFi Guide (Seeed Studio Wiki)](https://wiki.seeedstudio.com/reComputer_Jetson_JetPack_7_2/)
+
+  Field documentation detailing wireless bring-up on JetPack 7.2 (`6.8.12-1021-tegra`), including the platform-wide firmware `.zst` decompression requirement, prebuilt `.ko` module distribution for Realtek RTL8852BE, and the `apt-mark hold` kernel stabilization recommendation.
+
+- [Jetson Linux Networking: Realtek USB WiFi Support (NVIDIA Developer Forums)](https://forums.developer.nvidia.com/t/orin-nano-wifi-support-jetpack-7/325411)
+
+  Authoritative statement from NVIDIA engineering affirming that L4T distributions do not bundle out-of-tree Realtek USB wireless drivers, validating only select M.2 Key-E modules and designating USB WiFi adapters as out-of-tree community integrations.
