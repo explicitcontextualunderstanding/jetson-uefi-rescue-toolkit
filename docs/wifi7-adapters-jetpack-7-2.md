@@ -505,6 +505,18 @@ Following manual verification, choose a persistence strategy:
 1. **DKMS registration**: Runs `sudo ./install-driver.sh` from the repository root. If DKMS fails at the module signing step, proceed with manual installation.
 2. **Manual module maintenance**: Retain the module in `/lib/modules/6.8.12-1021-tegra/extra/rtw89/`. Because the fleet doctrine enforces `sudo apt-mark hold nvidia-l4t-* linux-image-* linux-headers-*`, the kernel ABI remains stable, and the compiled module persists across reboots without recompilation.
 
+### Phase 11: Benchmark script (reference implementation)
+
+The `host/wifi-bench.sh` script in this repository automates the Phase 9 methodology: it starts the iperf3 server on the peer node over SSH (propagating `SUDO_USER` so root never needs credentials), measures upload and download on each WiFi interface via `-B` binds, records link rates, and writes a timestamped log. All peer/interface/IPv/SSID defaults are environment-overridable:
+
+```bash
+# Example: compare two interfaces against a peer on the LAN
+PEER_HOST=192.168.100.2 PEER_WIFI_IP=192.168.1.87 \
+PCIE_IF=wlP1p1s0 USB_IF=wlx90de80e635f0 \
+PCIE_IP=192.168.1.100 USB_IP=192.168.1.102 \
+bash host/wifi-bench.sh
+```
+
 ---
 
 ## Part 6: Troubleshooting index (symptom → cause → fix)
