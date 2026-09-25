@@ -34,6 +34,10 @@
 
 PEER_USER="${PEER_USER:-amazon1148}"
 PEER_HOST="${PEER_HOST:-192.168.100.2}"   # peer's wired IP (server side)
+# 2026-09-25: WiFi LANs moved — nano2 is on Xiaomi_FED1 at 192.168.31.64
+# (was 192.168.1.87 on TELUS1757) and nano1's USB dongle holds 192.168.31.166
+# (was 192.168.1.102). WiFi leases drift — verify with `ip -br addr show`
+# before a run; the island IPs (192.168.100.1/.2) never move.
 PEER_WIFI_IP="${PEER_WIFI_IP:-192.168.31.64}"  # peer's WiFi IP (test endpoint)
 PCIE_IF="${PCIE_IF:-wlP1p1s0}"
 USB_IF="${USB_IF:-wlx90de80e635f0}"

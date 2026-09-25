@@ -623,10 +623,12 @@ Following manual verification, choose a persistence strategy:
 
 ### Phase 11: Benchmark script (reference implementation)
 
-The `host/wifi-bench.sh` script in this repository automates the Phase 9 methodology: it starts the iperf3 server on the peer node over SSH (propagating `SUDO_USER` so root never needs credentials), measures upload and download on each WiFi interface with `-B <ip>` source-address binding, records link rates, and writes a timestamped log. Add `--bind-dev <iface>` to its `iperf3` calls (iperf3 3.16 and later) to upgrade those runs from address binding to true `SO_BINDTODEVICE` pinning as described above. All peer/interface/IPv/SSID defaults are environment-overridable:
+The `host/wifi-bench.sh` script in this repository automates the Phase 9 methodology: it starts the iperf3 server on the peer node over SSH (propagating `SUDO_USER` so root never needs credentials), measures upload and download on each WiFi interface with `-B <ip>` source-address binding, records link rates, and writes a timestamped log. Add `--bind-dev <iface>` to its `iperf3` calls (iperf3 3.16 and later) to upgrade those runs from address binding to true `SO_BINDTODEVICE` pinning as described above. All peer/interface/IPv/SSID defaults are environment-overridable — WiFi leases move between access points, so read the current addresses with `ip -br addr show` on both nodes and substitute them:
 
 ```bash
 # Example: compare two interfaces against a peer on the LAN
+# (leases shown are the 2026-09-25 values: nano2 on Xiaomi_FED1, nano1's
+#  USB dongle on the same LAN; the island IPs never move)
 PEER_HOST=192.168.100.2 PEER_WIFI_IP=192.168.31.64 \
 PCIE_IF=wlP1p1s0 USB_IF=wlx90de80e635f0 \
 PCIE_IP=192.168.1.100 USB_IP=192.168.31.166 \
