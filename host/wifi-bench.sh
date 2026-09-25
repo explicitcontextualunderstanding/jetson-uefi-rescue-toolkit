@@ -34,11 +34,11 @@
 
 PEER_USER="${PEER_USER:-amazon1148}"
 PEER_HOST="${PEER_HOST:-192.168.100.2}"   # peer's wired IP (server side)
-PEER_WIFI_IP="${PEER_WIFI_IP:-192.168.1.87}"  # peer's WiFi IP (test endpoint)
+PEER_WIFI_IP="${PEER_WIFI_IP:-192.168.31.64}"  # peer's WiFi IP (test endpoint)
 PCIE_IF="${PCIE_IF:-wlP1p1s0}"
 USB_IF="${USB_IF:-wlx90de80e635f0}"
 PCIE_IP="${PCIE_IP:-192.168.1.100}"
-USB_IP="${USB_IP:-192.168.1.102}"
+USB_IP="${USB_IP:-192.168.31.166}"
 DURATION="${DURATION:-10}"
 
 LOG="${LOG:-$PWD/wifi-bench-$(date +%Y%m%d-%H%M%S).log}"

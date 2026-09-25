@@ -561,16 +561,18 @@ iperf3 -s
 # On the Jetson under test:
 #  192.168.1.50   iperf3 server address
 #  192.168.1.100  local IP of the PCIe interface (wlP1p1s0)
-#  192.168.1.102  local IP of the USB interface (wlx90de80e635f0)
+#  192.168.31.166  local IP of the USB interface (wlx90de80e635f0)
 
 # Benchmark the PCIe interface (-B source address plus --bind-dev device pinning):
 iperf3 -c 192.168.1.50 -B 192.168.1.100 --bind-dev wlP1p1s0 -t 10
 
 # Benchmark the USB WiFi 7 interface:
-iperf3 -c 192.168.1.50 -B 192.168.1.102 --bind-dev wlx90de80e635f0 -t 10
+iperf3 -c 192.168.1.50 -B 192.168.31.166 --bind-dev wlx90de80e635f0 -t 10
 ```
 
 Confirm the binding instead of assuming it: snapshot `ip -s link show <interface>` before and after a run and check that the bytes landed on the interface under test. That counter check is what separates real device binding from an address that merely routes the right way today.
+
+The server address must also be reachable from the interface under test. When the two radios associate with different access points and therefore sit on different subnets, pick a server each interface can reach, or confirm the routers forward between the subnets before trusting the numbers: a cross-subnet run measures the routing path along with the radio.
 
 #### Empirical bench results
 
@@ -625,9 +627,9 @@ The `host/wifi-bench.sh` script in this repository automates the Phase 9 methodo
 
 ```bash
 # Example: compare two interfaces against a peer on the LAN
-PEER_HOST=192.168.100.2 PEER_WIFI_IP=192.168.1.87 \
+PEER_HOST=192.168.100.2 PEER_WIFI_IP=192.168.31.64 \
 PCIE_IF=wlP1p1s0 USB_IF=wlx90de80e635f0 \
-PCIE_IP=192.168.1.100 USB_IP=192.168.1.102 \
+PCIE_IP=192.168.1.100 USB_IP=192.168.31.166 \
 bash host/wifi-bench.sh
 ```
 
