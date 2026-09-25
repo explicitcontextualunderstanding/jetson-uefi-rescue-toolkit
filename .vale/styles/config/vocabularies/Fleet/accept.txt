@@ -385,6 +385,7 @@ Walkthroughs
 wlan0
 wlan1
 XSkill
+Xiaomi
 yamllint
 YAMLs
 Yocto
