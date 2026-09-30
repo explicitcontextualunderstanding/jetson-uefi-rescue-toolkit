@@ -189,6 +189,7 @@ Lookups
 lspci
 lsusb
 mac80211
+Makefile
 markdownlint
 Mbit
 Mbps

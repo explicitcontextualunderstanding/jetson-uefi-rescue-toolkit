@@ -623,7 +623,7 @@ Following manual verification, choose a persistence strategy:
 
 ### Phase 11: Benchmark script (reference implementation)
 
-The `host/wifi-bench.sh` script in this repository automates the Phase 9 methodology: it starts the iperf3 server on the peer node over SSH (propagating `SUDO_USER` so root never needs credentials), measures upload and download on each WiFi interface with `-B <ip>` source-address binding, records link rates, and writes a timestamped log. Add `--bind-dev <iface>` to its `iperf3` calls (iperf3 3.16 and later) to upgrade those runs from address binding to true `SO_BINDTODEVICE` pinning as described above. All peer/interface/IPv/SSID defaults are environment-overridable — WiFi leases move between access points, so read the current addresses with `ip -br addr show` on both nodes and substitute them:
+The `host/wifi-bench.sh` script in this repository automates the Phase 9 methodology: it starts the iperf3 server on the peer node over SSH (propagating `SUDO_USER` so root never needs credentials), measures upload and download on each WiFi interface with `-B <ip>` source-address binding, records link rates, and writes a timestamped log. Add `--bind-dev <iface>` to its `iperf3` calls (iperf3 3.16 and later) to upgrade those runs from address binding to true `SO_BINDTODEVICE` pinning as described above. All peer/interface/IPv/SSID defaults are environment-overridable. WiFi leases move between access points, so read the current addresses with `ip -br addr show` on both nodes and substitute them:
 
 ```bash
 # Example: compare two interfaces against a peer on the LAN
