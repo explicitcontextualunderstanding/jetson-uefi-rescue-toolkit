@@ -152,8 +152,8 @@ Use this matrix to route hardware IDs to the correct driver source:
 | Bus | Numeric ID (VID:PID) | Underlying Silicon | Upstream Driver | JetPack 7.2 Action Required |
 | :--- | :--- | :--- | :--- | :--- |
 | **USB** | `0bda:1a2b` | Realtek Multi-State | `usb-storage` (trap) | Add the `usb_storage.conf` quirk so `usb-storage` does not bind, then run `usb_modeswitch` to move the adapter to its network ID |
-| **USB** | `0bda:8912` | Realtek RTL8912AU | `rtw89_8922au` | Build out-of-tree `morrownr/rtw89`, then decompress firmware |
-| **USB** | `0bda:8922` | Realtek RTL8922AU | `rtw89_8922au` | Build out-of-tree `morrownr/rtw89`, then decompress firmware |
+| **USB** | `0bda:8912` | Realtek RTL8912AU | `rtw89_8922au_git` | Build out-of-tree `morrownr/rtw89`, then decompress firmware |
+| **USB** | `0bda:8922` | Realtek RTL8922AU | `rtw89_8922au_git` | Build out-of-tree `morrownr/rtw89`, then decompress firmware |
 | **USB** | `0bda:c852` | Realtek RTL8852CU | `rtl8852cu` | Build out-of-tree `morrownr/rtl8852cu` |
 | **USB** | `0e8d:7925` | MediaTek MT7925 | `mt7925u` | Built into kernel 6.8, decompress firmware if needed |
 | **PCIe** | `8086:2725` | Intel AX210 | `iwlwifi` | In-kernel driver; decompress both `/lib/firmware/iwlwifi-ty-a0-gf-a0.pnvm` and the matching `iwlwifi-ty-a0-gf-a0-*.ucode` |
@@ -193,7 +193,7 @@ The driver builds and loads without reporting an error during module insertion, 
 
 ```text
 Direct firmware load for rtw89/rtw8922a_fw-4.bin failed with error -2
-rtw89_8922au 1-2:1.0: failed to setup chip information
+rtw89_8922au_git 1-2:1.0: failed to setup chip information
 ```
 
 To fix the issue, decompress the binary manually using `zstd -d` or `unzstd`:
@@ -228,8 +228,8 @@ zcat /proc/config.gz | grep CONFIG_MODULE_SIG
 Taint records a load that already happened; it never waives a check that is about to happen. An existing taint value is not evidence that an unsigned module will be accepted. When an out-of-tree module does load, `dmesg` reports two independent flags:
 
 ```text
-rtw89_8922au: loading out-of-tree module taints kernel.
-rtw89_8922au: module verification failed: signature and/or required key missing - tainting kernel
+rtw89_8922au_git: loading out-of-tree module taints kernel.
+rtw89_8922au_git: module verification failed: signature and/or required key missing - tainting kernel
 ```
 
 They set bits `4096` (out-of-tree) and `8192` (unsigned) in `/proc/sys/kernel/tainted`, which reads `12288` once both apply.
@@ -398,21 +398,21 @@ sudo make install
 sudo depmod -a
 ```
 
-This installs the core and PHY modules into `/lib/modules/6.8.12-1021-tegra/kernel/drivers/net/wireless/realtek/rtw89/`:
+This installs the core and PHY modules into `/lib/modules/6.8.12-1021-tegra/extra/rtw89/`. The out-of-tree Makefile appends a `_git` suffix to every module name so the build cannot collide with in-tree drivers:
 
-- `rtw89_core.ko`
-- `rtw89_pci.ko`
-- `rtw89_usb.ko`
-- `rtw89_8922a.ko`
-- `rtw89_8922ae.ko`
-- `rtw89_8922au.ko`
+- `rtw89_core_git.ko`
+- `rtw89_pci_git.ko`
+- `rtw89_usb_git.ko`
+- `rtw89_8922a_git.ko`
+- `rtw89_8922ae_git.ko`
+- `rtw89_8922au_git.ko`
 
 ### Phase 4: Module load and the firmware compression gap
 
 Attempt to load the USB driver:
 
 ```bash
-sudo modprobe rtw89_8922au
+sudo modprobe rtw89_8922au_git
 ```
 
 Inspect the kernel ring buffer:
@@ -424,9 +424,9 @@ sudo dmesg | grep -i rtw
 The system reports the firmware compression fault:
 
 ```text
-[  142.105432] rtw89_8922au 1-2:1.0: firmware: failed to load rtw89/rtw8922a_fw-4.bin (-2)
-[  142.105448] rtw89_8922au 1-2:1.0: Direct firmware load for rtw89/rtw8922a_fw-4.bin failed with error -2
-[  142.105455] rtw89_8922au 1-2:1.0: failed to setup chip information
+[  142.105432] rtw89_8922au_git 1-2:1.0: firmware: failed to load rtw89/rtw8922a_fw-4.bin (-2)
+[  142.105448] rtw89_8922au_git 1-2:1.0: Direct firmware load for rtw89/rtw8922a_fw-4.bin failed with error -2
+[  142.105455] rtw89_8922au_git 1-2:1.0: failed to setup chip information
 ```
 
 ### Phase 5: Firmware decompression remedy
@@ -449,8 +449,8 @@ sudo sh -c 'cd /lib/firmware/rtw89 && for f in rtw8922a_fw-4.bin rtw8922a_fw-3.b
 Unload and reinsert the module:
 
 ```bash
-sudo modprobe -r rtw89_8922au
-sudo modprobe rtw89_8922au
+sudo modprobe -r rtw89_8922au_git
+sudo modprobe rtw89_8922au_git
 ```
 
 Re-check `dmesg`:
@@ -462,9 +462,9 @@ sudo dmesg | grep -i rtw
 The log confirms successful initialization:
 
 ```text
-[  188.421002] rtw89_8922au 1-2:1.0: firmware: direct-loading firmware rtw89/rtw8922a_fw-4.bin
-[  188.512340] rtw89_8922au 1-2:1.0: Chip generic info: ...
-[  188.610214] rtw89_8922au 1-2:1.0: Broadcom/Realtek WiFi 7 Controller initialized
+[  188.421002] rtw89_8922au_git 1-2:1.0: firmware: direct-loading firmware rtw89/rtw8922a_fw-4.bin
+[  188.512340] rtw89_8922au_git 1-2:1.0: Chip generic info: ...
+[  188.610214] rtw89_8922au_git 1-2:1.0: Broadcom/Realtek WiFi 7 Controller initialized
 ```
 
 ### Phase 6: Interface verification and wireless scanning
@@ -583,7 +583,7 @@ Testing between two nodes over a local wireless access point yielded the followi
 | Interface & Driver | Sender Throughput | Receiver Throughput | Retransmits | Negotiated PHY Link Rate |
 | :--- | :--- | :--- | :--- | :--- |
 | **PCIe RTL8822CE** (`rtl88x2ce`) | 212 Mbit/s | 209 Mbit/s | 0 | 526.6 Mbit/s (VHT MCS7 80 MHz 2×2) |
-| **USB RTL8912AU** (`rtw89_8922au`) | 188 Mbit/s | 185 Mbit/s | 40 | 1080.6 Mbit/s (HE MCS10 80 MHz 2×2) |
+| **USB RTL8912AU** (`rtw89_8922au_git`) | 188 Mbit/s | 185 Mbit/s | 40 | 1080.6 Mbit/s (HE MCS10 80 MHz 2×2) |
 
 #### Interpreting the bottleneck
 

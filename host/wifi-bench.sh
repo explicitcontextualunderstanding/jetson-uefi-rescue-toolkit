@@ -67,7 +67,7 @@ ssh_as_user() {
 }
 
 echo ">>> starting iperf3 server on $PEER_HOST ..."
-ssh_as_user "$PEER_USER@$PEER_HOST" 'pkill iperf3 2>/dev/null; nohup iperf3 -s -D' \
+ssh_as_user "$PEER_USER@$PEER_HOST" 'pkill -u "$(id -u)" -x iperf3 2>/dev/null; nohup iperf3 -s -D' \
     || { echo "cannot reach peer — start iperf3 -s manually"; exit 1; }
 sleep 1
 
