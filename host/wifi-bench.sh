@@ -72,15 +72,17 @@ ssh_as_user "$PEER_USER@$PEER_HOST" 'pkill iperf3 2>/dev/null; nohup iperf3 -s -
 sleep 1
 
 measure() {
-    local label="$1" bind_ip="$2"
+    local label="$1" bind_ip="$2" iface="$3"
     echo ""
-    echo "===== $label (bind $bind_ip) ====="
-    iw dev 2>/dev/null | grep -A4 "interface $3" 2>/dev/null | grep -E 'tx bitrate|ssid' | head -2
-    iw dev "$3" link 2>/dev/null | grep -E 'tx bitrate|signal'
+    echo "===== $label (bind $bind_ip, dev $iface) ====="
+    iw dev 2>/dev/null | grep -A4 "interface $iface" 2>/dev/null | grep -E 'tx bitrate|ssid' | head -2
+    iw dev "$iface" link 2>/dev/null | grep -E 'tx bitrate|signal'
     echo "--- upload (server $PEER_WIFI_IP, ${DURATION}s) ---"
-    iperf3 -c "$PEER_WIFI_IP" -B "$bind_ip" -t "$DURATION" 2>/dev/null | grep -E 'sender|receiver'
+    # -B pins source address; --bind-dev sets SO_BINDTODEVICE (iperf 3.16+, needs CAP_NET_RAW).
+    # Run with sudo if your user lacks CAP_NET_RAW.
+    iperf3 -c "$PEER_WIFI_IP" -B "$bind_ip" --bind-dev "$iface" -t "$DURATION" 2>/dev/null | grep -E 'sender|receiver'
     echo "--- download (reverse, ${DURATION}s) ---"
-    iperf3 -c "$PEER_WIFI_IP" -B "$bind_ip" -t "$DURATION" -R 2>/dev/null | grep -E 'sender|receiver'
+    iperf3 -c "$PEER_WIFI_IP" -B "$bind_ip" --bind-dev "$iface" -t "$DURATION" -R 2>/dev/null | grep -E 'sender|receiver'
 }
 
 measure "PCIE interface" "$PCIE_IP" "$PCIE_IF"
@@ -88,5 +90,7 @@ measure "USB WiFi 7 interface" "$USB_IP" "$USB_IF"
 
 echo ""
 echo ">>> stopping iperf3 server ..."
-ssh_as_user "$PEER_USER@$PEER_HOST" 'pkill iperf3' 2>/dev/null
+# Kill only the iperf3 daemon we started (by matching the exact binary name and
+# running as the peer user), rather than a blanket pkill that could stop unrelated tests.
+ssh_as_user "$PEER_USER@$PEER_HOST" 'pkill -u "$(id -u)" -x iperf3' 2>/dev/null || true
 echo ">>> complete. No interfaces were disconnected. Results in: $LOG"

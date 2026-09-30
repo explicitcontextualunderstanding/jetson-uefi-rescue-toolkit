@@ -51,7 +51,7 @@ The switching sequence operates as follows:
 
 To bypass the virtual CD-ROM on Linux, two approaches exist:
 
-1. **Userland mode-switching (`usb_modeswitch`)**: the upstream-recommended path for a genuinely multi-state adapter. It sends the SCSI eject (or vendor) command that the Windows driver would have sent, which is what makes the dongle disconnect and re-enumerate as a network device. On embedded Tegra systems the rules can race during boot or fail silently when the rule database lacks your vendor ID, so run it once by hand (`sudo usb_modeswitch -v 0bda -p 1a2b`) and confirm from `dmesg` that the device came back with its network product ID.
+1. **Userland mode-switching (`usb_modeswitch`)**: the upstream-recommended path for a genuinely multi-state adapter. It sends the SCSI eject (or vendor) command that the Windows driver would have sent, which is what makes the dongle disconnect and re-enumerate as a network device. On embedded Tegra systems the rules can race during boot or fail silently when the rule database lacks your vendor ID, so install `usb-modeswitch` (`sudo apt-get install -y usb-modeswitch`), run it once by hand (`sudo usb_modeswitch -K -v 0bda -p 1a2b`), and confirm from `dmesg` that the device came back with its network product ID.
 2. **Kernel storage quirks**: a modprobe configuration that tells `usb-storage` to ignore the CD-ROM mass-storage interface, the mechanism `morrownr` maintains as `usb_storage.conf`. Read it as suppression, not as a mode switch: it stops the kernel binding a storage driver to the interface, and it sends the adapter nothing. A multi-state adapter that never receives its switch command stays a storage device with no radio, whether or not the quirk is in place.
 
 Create `/etc/modprobe.d/usb_storage.conf` to instruct `usb-storage` to ignore common Realtek installer IDs:
@@ -643,7 +643,7 @@ Use this quick-reference table to diagnose and resolve wireless bring-up failure
 
 | Observable Symptom | Root Cause | Technical Remedy |
 | :--- | :--- | :--- |
-| `lsusb` shows `0bda:1a2b` (CD-ROM) | Multi-state USB hardware mode trap | Add `options usb-storage quirks=0bda:1a2b:i` to `/etc/modprobe.d/usb_storage.conf` and replug, then run `usb_modeswitch` so the adapter actually leaves storage mode (the quirk does not switch it). |
+| `lsusb` shows `0bda:1a2b` (CD-ROM) | Multi-state USB hardware mode trap | Add `options usb-storage quirks=0bda:1a2b:i` to `/etc/modprobe.d/usb_storage.conf` and replug, then run `sudo usb_modeswitch -K -v 0bda -p 1a2b` so the adapter actually leaves storage mode (the quirk does not switch it). |
 | `Direct firmware load ... failed with error -2` | Kernel lacks `.zst` decompression support | If the `.zst` file exists, decompress it to `.bin` with `zstd -d`. If no `.zst` exists at all, install the firmware first (`sudo make install_fw` from the `rtw89` tree), then decompress. |
 | `Invalid module format` on `insmod` | Module vermagic does not match kernel ABI | Rebuild modules against active headers: `/lib/modules/$(uname -r)/build`. |
 | `Key was rejected by service` (`insmod`/`modprobe`) | Signature verification rejected an unsigned module, or one signed with a key the kernel does not trust | Read the enforcement config first: `zcat /proc/config.gz \| grep CONFIG_MODULE_SIG`. With `CONFIG_MODULE_SIG_FORCE=y` no taint state waives the check. Sign the `.ko` with a key the kernel trusts, then load again. |
