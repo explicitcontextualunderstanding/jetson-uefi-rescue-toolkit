@@ -10,7 +10,7 @@ Curated external references that ground this repository's firmware architecture,
 
 - [UEFI Adaptation, NVIDIA Jetson Linux Developer Guide (r39.2.1)](https://docs.nvidia.com/jetson/archives/r39.2.1/DeveloperGuide/SD/Bootloader/UEFI.html)
 
-  Jetson EDK2 architecture, `L4tLauncher` (`BOOTAA64.EFI`) behavior, NVRAM variable schemas under the NVIDIA public GUID `781e084c-a330-417c-b678-38e696380cb9` (including `RootfsStatusSlotA`/`RootfsStatusSlotB` slot health values), Capsule Update handling, and the efivarfs variable-restoration procedure. This is the authoritative reference for the tutorial's NVRAM surgery section. The same content is served at the [r39.2 archive](https://docs.nvidia.com/jetson/archives/r39.2/DeveloperGuide/SD/Bootloader/UEFI.html).
+  Jetson EDK2 architecture, `L4TLauncher` (`BOOTAA64.EFI`) behavior, NVRAM variable schemas under the NVIDIA public GUID `781e084c-a330-417c-b678-38e696380cb9` (including `RootfsStatusSlotA`/`RootfsStatusSlotB` slot health values), Capsule Update handling, and the efivarfs variable-restoration procedure. This is the authoritative reference for the tutorial's NVRAM surgery section. The same content is served at the [r39.2 archive](https://docs.nvidia.com/jetson/archives/r39.2/DeveloperGuide/SD/Bootloader/UEFI.html).
 
 - [Jetson Orin Nano Developer Kit User Guide: Quick Start](https://docs.nvidia.com/jetson/orin-nano-devkit/user-guide/latest/quick_start.html)
 

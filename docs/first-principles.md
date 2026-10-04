@@ -59,7 +59,7 @@ Stable (Always identify media by structure):
 
 ### The shell navigation protocol
 1. Run `map -r` to force driver reconnection and display complete device paths.
-2. Filter readable filesystems using `map -fs`.
+2. List the mappings with `map` and pick out the `FSx:` rows (there is no filesystem-only filter; `BLKx:` rows are raw devices).
 3. Locate storage targets by matching device path strings:
    - `USB(...)` indicates external USB storage.
    - `NVMe(...)` indicates internal M.2 SSD storage.
@@ -74,7 +74,7 @@ The Jetson boot process is a relay across five independent execution environment
 
 ```text
 ┌─────────────────────────┐
-│ 1. Hardware & BootROM   │  Pins 9–10 (FORCE_RECOVERY_N), Carrier power rails, APX 0955:7020
+│ 1. Hardware & BootROM   │  Pins 9–10 (FORCE_RECOVERY_N), Carrier power rails, APX 0955:7523 (Orin Nano 8 GB)
 └────────────┬────────────┘
              │
              ▼
@@ -101,7 +101,7 @@ The Jetson boot process is a relay across five independent execution environment
 ### Layer 1: Hardware and carrier straps
 When power rails fail or firmware volumes corrupt completely, software bootstrapping ceases. The Tegra BootROM provides a hardware-level recovery state (USB Recovery Mode or RCM).
 - **Discriminator**: Hold the `FORCE_RECOVERY_N` strap (J14 pin 10 to pin 9 or 11) during power-on.
-- **Physical Proof**: Host workstation `lsusb` reports `0955:7020 NVIDIA Corp. APX`. If APX enumerates, the SoC is alive; carrier power sequencing or firmware volumes require remediation.
+- **Physical Proof**: Host workstation `lsusb -d 0955:` reports `0955:7523 NVIDIA Corp. APX` (Orin Nano 8 GB; `0955:7020` means L4T is running, not RCM). If APX enumerates, the SoC is alive; carrier power sequencing or firmware volumes require remediation.
 
 ### Layer 2: QSPI firmware and variable quarantine
 EDK2 firmware monitors boot attempts across redundant slots (Slot A and Slot B). If boot attempts exceed the retry threshold, firmware writes `0x000000FF` (`Unbootable`) to `RootfsStatusSlotA`.

@@ -416,8 +416,8 @@ li { margin-bottom: 4px; line-height: 1.6; }
         <b>RCM provisioning (tonight):</b> The documented FC REC pin mapping did not match
         the silk-screen on the Orin Nano Developer Kit—pin-by-label vs. pin-by-number
         produced two failed jumper attempts. Device enumeration triad
-        <code>0955:7020</code> (APX in RCM) vs. <code>7523</code> (tegraflash USB) vs.
-        the running-OS gadget confirmed whether the board was in RCM hardware mode or USB-loader mode.
+        <code>0955:7523</code> (APX in RCM) vs. <code>0955:7020</code> (running-OS device-mode
+        gadget) vs. no NVIDIA device at all confirmed whether the board was in RCM hardware mode or had booted.
         The sibling's "45G no backup" alarm was falsified by probing the whole host.
       </div>
     </div>
@@ -453,7 +453,7 @@ li { margin-bottom: 4px; line-height: 1.6; }
 
       <h3>The shell navigation protocol:</h3>
       <pre>Shell&gt; map -r          # re-enumerate all handles
-Shell&gt; map -fs            # show only filesystems
+Shell&gt; map                # list mappings (FSx: = filesystems)
 Shell&gt; fs4:                 # enter the handle
 FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
 
@@ -480,7 +480,7 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
       </p>
 
       <div class="pipeline">
-        <div class="pipe-stage"><span class="num">1</span>Hardware &amp; BootROM (read-only memory)—FORCE_RECOVERY_N strap (J14), APX (Application Processor) <code class="bg">0955:7020</code></div>
+        <div class="pipe-stage"><span class="num">1</span>Hardware &amp; BootROM (read-only memory)—FORCE_RECOVERY_N strap (J14), APX (Application Processor) <code class="bg">0955:7523</code> on Orin Nano 8 GB</div>
         <div class="pipe-arrow">▼</div>
         <div class="pipe-stage"><span class="num">2</span>QSPI (quad serial peripheral interface) UEFI (Unified Extensible Firmware Interface), TianoCore EDK II, NVRAM (non-volatile memory) variable quarantine (Slot A/B retry threshold)</div>
         <div class="pipe-arrow">▼</div>
@@ -575,8 +575,9 @@ FS4:\&gt; ls \EFI\BOOT        # verify contents before executing
       <ul style="font-size:13px; margin-top:6px;">
         <li><b>RCM provisioning (tonight):</b> The board was in RCM while the user unplugged it
             believing it was dead—serial silence was the success signal. Silence = RCM mode active.</li>
-        <li><b>Visual non-evidence:</b> The Tegraflash USB enumeration (device ID <code>7523</code>)
-            is the only reliable RCM indicator until the APX device (<code>0955:7020</code>) appears.</li>
+        <li><b>Visual non-evidence:</b> The APX enumeration in recovery mode (device ID <code>0955:7523</code>
+            on the Orin Nano) is the only reliable RCM indicator; <code>0955:7020</code> means the L4T
+            device-mode gadget is up—the OS or recovery kernel is running, not the bootROM.</li>
       </ul>
 
       <h3>Non-visual diagnostic ladder:</h3>

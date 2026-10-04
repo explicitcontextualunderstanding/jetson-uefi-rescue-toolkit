@@ -14,6 +14,7 @@ Core operational rules, system boundaries, and execution guardrails for autonomo
   - Primary OS storage: PCIe M.2 NVMe SSD (typical: 16-partition L4T GPT layout).
   - Recovery storage: USB mass-storage thumbdrive / external enclosure (FAT32 ESP + ISO9660/ext4).
 - **Debug Interface**: Jetson UART Debug Console via Micro-USB / USB-C interface (`/dev/ttyTCU0`, 115200 8N1).
+- **Required Companion Repository**: `jetson-bsp-skills` (a clone of `github.com/NVIDIA-AI-IOT/jetson-bsp-skills` at `~/workspace/jetson-bsp-skills`, registered in the active Hermes profile's `skills.external_dirs`). Its 24 `jetson-*` skills own every state-changing recovery step; this repository owns diagnosis. Treat the companion as a **hard requirement**—verify the clone and the registration before any recovery that flashes, rebuilds, or gathers evidence on a live DUT.
 
 ---
 
@@ -48,6 +49,12 @@ Agents generating code or instructing users on recovery commands MUST strictly a
 - The agent must never prompt for or accept a sudo password through any channel (chat, file, environment variable).
 - When a command requires root privileges (for example, raw block device access or `mount`), present the command in a fenced code block and instruct the user to execute it directly in their terminal.
 
+### Rule 7: Delegate State-Changing Steps to jetson-bsp-skills (Required Dependency)
+- The `jetson-bsp-skills` repository is a **requirement**, not an optional extra: `~/workspace/jetson-bsp-skills` must be cloned, and its `skills/` directory must appear in the active profile's `skills.external_dirs` (currently `~/.hermes/profiles/jetson/config.yaml`).
+- Read-only diagnosis—Tier 0 triage, `map -r`, `dmpstore`, `host/` media forensics—runs without it. Every step that writes to QSPI or storage, rebuilds artifacts, or gathers evidence on a live DUT MUST route through `/jetson-flash-image`, `/jetson-build-source`, `/jetson-promote-image`, or `/jetson-validate-image`.
+- Never inline flash or rebuild commands into this repository's docs or skill. If the clone or the registration is missing, stop and restore both (clone the repo, add the `external_dirs` entry) before proceeding; never substitute a hand-copied command from memory.
+- Routing boundary: stock-release flash and flash-failure triage go to `devops/jetson-rcm-flash`; promoted-overlay deploys go to `/jetson-flash-image`; on-target evidence goes to `/jetson-validate-image`.
+
 ---
 
 ## 3. Command Index & Diagnostic Routing
@@ -64,11 +71,13 @@ When asked to diagnose or resolve a boot failure, select tools according to this
 | **Bench boot-validation of rescue media** | qemu-system-aarch64 + AAVMF (Recipe F in .agents/skills/jetson-uefi-recovery/SKILL.md) | Workstation (Linux/macOS, QEMU + AAVMF installed) |
 | **Scope + failure-layer orientation before any recovery** | docs/uefi-rescue-shell-tutorial.md Tier 0 matrix | Any (read-first) |
 | **Shell command inventory discovery** | `nsh/probe_uefi_shell.nsh` | Jetson UEFI Shell (`Shell>`) |
-| **Automated ESP discovery & boot** | `nsh/startup.nsh` | Jetson UEFI Shell (`Shell>`) |
-| **L4tLauncher missing config / header error** | `nsh/stage-grub.nsh` | Jetson UEFI Shell (`Shell>`) |
+| **Mapping refresh + `BOOTAA64.EFI` probe (reports hits; boot is manual)** | `nsh/startup.nsh` | Jetson UEFI Shell (`Shell>`) |
+| **L4TLauncher missing config / header error** | `nsh/stage-grub.nsh` | Jetson UEFI Shell (`Shell>`) |
 | **Bootloader completely dead/missing** | `nsh/boot-kernel-stub.nsh` | Jetson UEFI Shell (`Shell>`) |
 | **Offline firmware inspection** | `firmware/analyze_uefi_shell.py` | Any host (Python 3) |
 | **Fetch NVIDIA firmware without full BSP** | `firmware/fetch-uefi-firmware.sh` | Any host (bash + curl + tar) |
+| **RCM reflash / QSPI bump (writes QSPI or storage)** | `/jetson-flash-image` (jetson-bsp-skills, **required companion**) | Workstation, DUT in RCM |
+| **On-target evidence (UEFI banner, `COMPATIBLE_SPEC`, kernel version)** | `/jetson-validate-image` (jetson-bsp-skills, **required companion**) | Workstation → DUT over SSH or UART |
 
 ---
 

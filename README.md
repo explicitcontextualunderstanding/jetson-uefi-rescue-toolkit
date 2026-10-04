@@ -2,9 +2,20 @@
 
 [![Vale Lint](https://img.shields.io/badge/style-Vale%20Google-blue.svg)](.vale.ini)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-NVIDIA%20Jetson%20Orin%20Nano%20%7C%20NX-green.svg)](#supported-hardware)
+[![Platform](https://img.shields.io/badge/Platform-NVIDIA%20Jetson%20Orin%20Nano%20%7C%20NX-green.svg)](#supported-hardware--firmware)
 
 A field-tested toolkit and diagnostic runbook for recovering unbootable **NVIDIA Jetson Orin Nano / NX** systems via the interactive UEFI Shell, verifying rescue boot media pre-flight, and analyzing EDK2 firmware volumes offline.
+
+---
+
+## Required Companion Repository: jetson-bsp-skills
+
+This toolkit **requires** the [jetson-bsp-skills](https://github.com/NVIDIA-AI-IOT/jetson-bsp-skills) repository for every state-changing recovery step. Read-only diagnosis works without it; anything that flashes, rebuilds, or probes a live DUT does not.
+
+- **Clone**: `~/workspace/jetson-bsp-skills` (upstream `https://github.com/NVIDIA-AI-IOT/jetson-bsp-skills.git`).
+- **Registration**: `~/.hermes/profiles/jetson/config.yaml` → `skills.external_dirs` → `/home/amazon1148/workspace/jetson-bsp-skills/skills`, which exposes the 24 `jetson-*` skills (Setup → Customize → Build → Deploy).
+- **Split of work**: this repository diagnoses (Tier 0 triage, UEFI-shell and NVRAM fixes, media forensics); the companion executes the write legs through `/jetson-flash-image`, `/jetson-build-source`, `/jetson-promote-image`, and `/jetson-validate-image`. The hand-off table lives in [`.agents/skills/jetson-uefi-recovery/SKILL.md`](.agents/skills/jetson-uefi-recovery/SKILL.md) §0 and in [`AGENTS.md`](AGENTS.md) Rule 7.
+- **When either piece is missing**: restore the clone and the `external_dirs` entry before starting a recovery that needs a flash. `AGENTS.md` Rule 7 forbids substituting a hand-copied command from memory.
 
 ---
 
@@ -35,7 +46,7 @@ Shell>
 Refresh hardware mappings to discover your block devices and readable filesystems:
 ```text
 Shell> map -r
-Shell> map -fs
+Shell> map
 ```
 *Note: `FSx:` are readable FAT partitions; `BLKx:` are raw block devices or unreadable filesystems (such as ext4 or ISO9660).*
 
@@ -50,7 +61,7 @@ Shell> fs0:\probe_uefi_shell.nsh
 ```
 
 ### 3. Stage GRUB Next to Failing L4TLauncher
-If `L4tLauncher` fails with *"Android image header not seen"* or fails to locate its configuration on ISO9660:
+If `L4TLauncher` fails with *"Android image header not seen"* or fails to locate its configuration on ISO9660:
 ```text
 Shell> fs0:\stage-grub.nsh fs1: fs3:
 Shell> fs3:

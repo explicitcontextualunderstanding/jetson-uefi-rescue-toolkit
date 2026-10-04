@@ -40,9 +40,9 @@ Before touching any tool, answer one question: **which layer of the stack is bro
 
 | # | Layer | Observable symptom | Fastest discriminator | Decisive tool | Section |
 |---|---|---|---|---|---|
-| 1 | **Power / carrier hardware** | Fan never spins, no serial output, display dark, no USB enumeration | Hold FORCE_RECOVERY jumper while powering; watch `lsusb` on the host | Host `lsusb` looking for `0955:7020` (APX) | [RCM](#5-last-resort-hardware-force-recovery-mode-rcm--out-of-band-flashing) |
+| 1 | **Power / carrier hardware** | Fan never spins, no serial output, display dark, no USB enumeration | Hold FORCE_RECOVERY jumper while powering; watch `lsusb` on the host | Host `lsusb -d 0955:` showing `NVIDIA Corp. APX` (Orin Nano 8 GB = `0955:7523`; `0955:7020` means L4T is running, not RCM) | [RCM](#5-last-resort-hardware-force-recovery-mode-rcm--out-of-band-flashing) |
 | 2 | **Firmware (QSPI/UEFI)** | Drops to `Shell>` with an `ASSERT`, or `LoadImage` refuses a verified-valid ARM64 binary on a readable FS | Binary verifies (PE header, 0xAA64) but firmware refuses it → firmware-level rejection, not media | UEFI Shell `map -r` + ESC Setup quarantine clear | [Tier 2 §2](#2-when-the-firmware-refuses-a-valid-binary-efi_unsupported) |
-| 3 | **Boot configuration (ESP content)** | `Shell>` drop without ASSERT; `BOOTAA64.EFI` runs but `L4TLauncher` prints `Android image header not seen` | `BOOTAA64.EFI` executed fine → launcher found no `extlinux.conf`/`grubaa64.efi` next to it | UEFI Shell `ls \EFI\BOOT` + staging `grubaa64.efi`/`grub.cfg` | [Tier 2 §1](#1-jetson-firmware-boot-pipeline--mental-model) |
+| 3 | **Boot configuration (ESP content)** | `Shell>` drop without ASSERT; `BOOTAA64.EFI` runs but `L4TLauncher` prints `Android image header not seen` | `BOOTAA64.EFI` executed fine → the configured boot path is missing: no `\boot\extlinux\extlinux.conf` (ExtLinux mode) and/or no `\EFI\BOOT\grubaa64.efi` (GRUB mode) | UEFI Shell `ls \EFI\BOOT` + `ls \boot\extlinux`, then stage `grubaa64.efi`/`grub.cfg` or restore `extlinux.conf` | [Tier 2 §1](#1-jetson-firmware-boot-pipeline--mental-model) |
 | 4 | **Filesystem (rootfs)** | Launcher or GRUB starts the kernel but mount of the root filesystem fails (or `L4TLauncher` falls back to recovery) | PARTLABEL/GUID correct but Ext4Dxe (firmware) or kernel ext4 cannot mount → suspect dirty journal or feature flags beyond the firmware's driver | `e2fsck -fy` from a live/rescue environment; inspect with `tune2fs -l` | [Tier 2 §3](#3-direct-linux-kernel-execution-via-efi-stub) |
 | 5 | **Kernel / device tree** | Kernel starts (serial prints `Linux version`) then panics or hangs before userspace | Serial console output: panic text names the failing subsystem (for example, HSP mailbox mismatch = kernel/firmware generation skew) | Direct EFI-stub kernel launch with explicit `console=` to separate kernel from bootloader | [Tier 2 §3](#3-direct-linux-kernel-execution-via-efi-stub) |
 | 6 | **OS configuration (userland)** | Kernel boots, switch_root fails, services fail, or SSH never appears | `systemd` reached userspace → the problem is inside the rootfs, not below it | Recovery/rescue shell; inspect `/var/log`, `systemctl`, `dpkg --audit` | [Recovery kernel](#in-band-restoration-via-efivarfs-recovery-kernel-shell) |
@@ -50,7 +50,7 @@ Before touching any tool, answer one question: **which layer of the stack is bro
 Three worked discriminators from a real recovery (field-verified on an Orin Nano, JetPack 7.2.1):
 
 - **Firmware vs media**: a valid `BOOTAA64.EFI` (correct PE machine type 0xAA64) on a readable FAT partition that the firmware refuses with `EFI_UNSUPPORTED` is firmware-level boot-chain rejection—the media was proven readable by `map`/`ls` first.
-- **Bootloader vs filesystem**: `Android image header not seen` is *not* an Android error. It means `BOOTAA64.EFI` ran, found no `extlinux.conf` or `grubaa64.efi`, and fell through to its last-resort Android-recovery probe. The fix is staging GRUB next to the launcher, not repartitioning.
+- **Bootloader vs filesystem**: `Android image header not seen` is *not* an Android error. It means `BOOTAA64.EFI` ran, its configured boot path failed (missing `\boot\extlinux\extlinux.conf` in ExtLinux mode, or missing `\EFI\BOOT\grubaa64.efi` in GRUB mode), and `L4TLauncher` fell through to its last-resort Android-style partition probe. The fix is restoring that config file or staging GRUB next to the launcher—not repartitioning.
 - **Kernel vs configuration**: once serial shows `Linux version`, everything above the kernel line is a configuration/userland problem and everything below was already proven working—split the investigation at that line.
 
 > [!IMPORTANT]
@@ -99,12 +99,13 @@ When the USB debug console is dead, the 12-pin **J14 button header** on the carr
 |---|---|---|---|
 | 3 | `UART2_TXD` | Output | Jetson transmits console data → wire to **adapter RXD** |
 | 4 | `UART2_RXD` | Input | Wire from **adapter TXD** → Jetson receives keystrokes |
-| 8 | `SYS_RESET_N` | Input | Active-low hardware reset; momentary short to GND reboots the board |
-| 10 | `FORCE_RECOVERY_N` | Input | Active-low bootROM strap: hold low across power-on to enter USB Recovery Mode (RCM) |
+| 8 | `SYS_RESET_N` | Input | Active-low hardware reset; momentary short to GND (pin 9 or 11) reboots the board |
+| 9 | `GND` |—| Common ground → the ground side of the FORCE_RECOVERY_N jumper |
+| 10 | `FORCE_RECOVERY_N` | Input | Active-low bootROM strap: hold low across power-on (jumper to pin 9 or 11) to enter USB Recovery Mode (RCM) |
 | 11 | `GND` |—| Common ground → adapter ground |
 | 12 | `PWR_BTN_N` | Input | Active-low power/sleep control |
 
-Terminal settings: `115200` baud, 8 data bits, no parity, 1 stop bit (`115200 8N1`), hardware flow control **off**. The Force Recovery jumper procedure (pins 9–10 or 10–11 during power-on, removable after the state latches) and the host-side `lsusb` check for the APX device (`0955:7020`) are covered in [Tier 2's RCM section](#5-last-resort-hardware-force-recovery-mode-rcm--out-of-band-flashing).
+Terminal settings: `115200` baud, 8 data bits, no parity, 1 stop bit (`115200 8N1`), hardware flow control **off**. The Force Recovery jumper procedure (pins 9–10 or 10–11 during power-on, removable after the state latches) and the host-side `lsusb -d 0955:` check for the APX device (product ID is module-specific: Orin Nano 8 GB = `0955:7523`, Orin Nano 4 GB = `0955:7623`, Orin NX = `0955:7423`, AGX Orin = `0955:7023`; `0955:7020` is the running-OS device-mode gadget, not RCM) are covered in [Tier 2's RCM section](#5-last-resort-hardware-force-recovery-mode-rcm--out-of-band-flashing).
 
 For adapter wiring technique (3.3V TTL, cross-wired TXD/RXD, no power lead), see the [JetsonHacks serial console walkthrough](https://jetsonhacks.com/2019/04/19/jetson-nano-serial-console/) in [docs/references.md](references.md).
 
@@ -157,20 +158,23 @@ This lists every command compiled into your specific firmware build. Two minutes
 - **Paths use backslashes (`\`)**, not Unix forward slashes (`/`).
 - Commands are case-insensitive (`help` equals `HELP`), but certain file lookups in L4T firmware require exact uppercase matching.
 
-#### Step 1: See What Drives the Firmware Detects (`map -fs` & `map -r`)
+#### Step 1: See What Drives the Firmware Detects (`map` & `map -r`)
 
 Determine which storage media the firmware can access:
 
 ```text
-Shell> map -fs
-```
-
-- **`map -fs` (File Systems Only)**: Filters out raw hardware noise and displays only mounted, readable filesystems (`FS0:`, `FS1:`, etc.).
-- **`map -r` (Refresh & Device Paths)**: Forces the UEFI driver manager to reconnect all devices and prints full UEFI device paths.
-
-```text
 Shell> map -r
 ```
+
+- **`map -r` (Refresh & Device Paths)**: Resets the mappings to their defaults, forces the UEFI driver manager to reconnect every device, and prints each mapping with its full UEFI device path.
+- **`map` (List Mappings)**: Prints the current mapping table without touching the hardware. The table mixes `FSx:` rows (readable filesystems you can `cd` into) with `BLKx:` rows (raw devices and partitions the shell can address but not mount).
+
+```text
+Shell> map
+```
+
+> [!WARNING]
+> There is no file-system-only switch on this build: the valid `map` options are `-r`, `-v`, `-c`, `-f`, `-u`, `-t <type>`, `-d <sname>`, and `-sfo`. `map -fs` is rejected by the shell's parameter parser as an unknown option and prints no mapping table—run `map -r` or `map` and separate `FSx:` from `BLKx:` by eye (see the decoding rule below).
 
 > [!IMPORTANT]
 > **The 5-Second Device Path Decoding Rule**:
@@ -229,26 +233,26 @@ FS4:\EFI\BOOT\> BOOTAA64.EFI
 
 Rather than copying files manually across drive handles in the shell, use the pre-tested automation scripts included in this repository:
 
-#### A. Automated ESP Discovery & Rescue (`startup.nsh`)
-When dropped into the root of your rescue USB FAT32 filesystem, the UEFI Shell can execute it automatically at boot, or you can trigger it manually. Example mapping (Tier 2 §8 capture): rescue USB = `fs4:`; substitute from your `map -r`:
+#### A. Mapping Refresh & Bootloader Probe (`startup.nsh`)
+When dropped into the root of your rescue USB FAT32 filesystem, the UEFI Shell executes it automatically at boot, or you can trigger it manually. Example mapping (Tier 2 §8 capture): rescue USB = `fs4:`; substitute from your `map -r`:
 
 ```text
 Shell> fs4:\startup.nsh
 ```
 
-- Automatically loops across all active filesystem handles (`FS0:` through `FS9:`).
-- Detects whether media is USB or NVMe.
-- Probes for valid `BOOTAA64.EFI` or `grubaa64.efi` binaries and executes the optimal target.
+- Refreshes the mapping table (`map -r`) so newly attached media appears, then prints a short recovery command cheat sheet (`map -r`, `ls \EFI\BOOT`, `bcfg boot dump`, `dmpstore BootOrder`, `reset`).
+- Probes `fs0:` through `fs3:` for `\EFI\BOOT\BOOTAA64.EFI` and echoes a `Found ...` line for each hit. It does not probe `grubaa64.efi`, does not inspect handles above `fs3:`, and never launches a binary: if your media enumerates as `fs4:` or higher the probe comes up empty, so switch to that drive yourself (`fs4:`) and check with `ls`.
+- Boot by hand (Step 3 below), or run `stage-grub.nsh` if `L4TLauncher` fails.
 
 #### B. Automated GRUB Staging (`stage-grub.nsh`)
-When `L4TLauncher` fails with `"Android image header not seen"`, it needs `grubaa64.efi` and `grub.cfg` placed alongside it. Run (example mapping: rescue USB = `fs4:`, target NVMe ESP = `fs2:`):
+When `L4TLauncher` fails with `"Android image header not seen"` because its GRUB path is empty, it needs `grubaa64.efi` and `grub.cfg` placed alongside it. (In ExtLinux boot mode the missing file is `\boot\extlinux\extlinux.conf` instead—see [Tier 2 §1](#1-jetson-firmware-boot-pipeline--mental-model).) Run (example mapping: rescue USB = `fs4:`, target NVMe ESP = `fs2:`):
 
 ```text
 Shell> fs4:\stage-grub.nsh fs4: fs2:
 ```
 
-- Copies GRUB binaries and configuration from the source handle (`fs4:`, the rescue USB ESP staged by `stage-fat-esp.sh`) directly into the target ESP (`fs2:\EFI\BOOT\`).
-- Verifies destination file integrity before launching.
+- Creates `\EFI\BOOT` on the destination handle, then copies `grubaa64.efi` (from `<source>:\EFI\BOOT\`, falling back to `<source>:\boot\`) and `grub.cfg` (from `<source>:\boot\grub\`, falling back to `<source>:\EFI\BOOT\`) into `<destination>:\EFI\BOOT\`. Those source paths match the layout `host/stage-fat-esp.sh` writes to the rescue stick (`fs4:` in the example mapping).
+- Re-checks that both files landed (`if not exist ...`) and echoes the three commands that start GRUB. It performs no size or hash verification and does not launch GRUB for you.
 
 #### C. Direct Kernel Execution Stub (`boot-kernel-stub.nsh`)
 When all bootloaders are missing or corrupted:
@@ -257,8 +261,8 @@ When all bootloaders are missing or corrupted:
 Shell> fs4:\boot-kernel-stub.nsh fs2: PARTUUID=5bc3524f-9ff2-4f0e-a8b7-5eb78efe0979
 ```
 
-- The script runs from the rescue USB (`fs4:`); the handle argument (`fs2:` in the example mapping) is the filesystem holding the kernel and initrd.
-- Launches the ARM64 Linux kernel directly via its built-in EFI stub with verified console parameters (`console=ttyTCU0,115200`).
+- The script runs from the rescue USB (`fs4:`); the handle argument (`fs2:` in the example mapping) is the filesystem holding the kernel and initrd. It switches to that handle, then probes `\boot\vmlinuz`, `\casper\vmlinuz`, and `\vmlinuz` in that order and launches the first match through the kernel's built-in EFI stub.
+- Boot arguments are `initrd=... root=<your PARTUUID> rootdelay=60 console=ttyTCU0,115200 console=tty0` (the `\casper\vmlinuz` branch substitutes `boot=casper` for `root=`), so console output lands on both the TCU UART and the framebuffer.
 
 #### D. Host-Side USB Pre-Flight Verifier
 Before inserting rescue media into the Jetson, run the verification suite on your Linux or macOS workstation:
@@ -295,10 +299,13 @@ Understanding the Jetson boot handoff sequence clarifies what specific shell err
 │    (NVIDIA L4TLauncher PE32+ AArch64 executable)       │
 └──────────────────────────┬─────────────────────────────┘
                            │
-             Probes in sequential order:
-             1. extlinux.conf
-             2. grubaa64.efi + grub.cfg
-             3. Android boot image header
+             Boot mode comes from NVRAM (L4TDefaultBootMode);
+             an absent or invalid variable falls back to GRUB:
+             1. GRUB       → \EFI\BOOT\grubaa64.efi (+ grub.cfg)
+             2. ExtLinux   → \boot\extlinux\extlinux.conf (shipped default)
+             3. Direct partitions / Recovery kernel
+             Any failed path falls through to the Android-style
+             "kernel"/"recovery" partition probe
                            │
        ┌───────────────────┴───────────────────┐
        │                                       │
@@ -318,9 +325,9 @@ Android image header not seen. Failed to boot recovery:1 partition
 from fs3: EFI/BOOT/BOOTAA64.efi
 ```
 
-**This is not an Android installation error.** It confirms that `BOOTAA64.EFI` loaded and executed successfully. The message occurs because `L4TLauncher` probed for `extlinux.conf` and `grubaa64.efi`, found neither, and fell through to its last-resort check for Android-format recovery partitions.
+**This is not an Android installation error.** It confirms that `BOOTAA64.EFI` loaded and executed successfully. `L4TLauncher` reads its boot mode from NVRAM (`L4TDefaultBootMode`; an absent or invalid variable falls back to GRUB) and then loads the matching configuration—`\EFI\BOOT\grubaa64.efi` in GRUB mode, `\boot\extlinux\extlinux.conf` in ExtLinux mode. When that configuration is missing, unreadable, or fails to start, the launcher falls through to its last-resort Android-style read of the `kernel`/`recovery` partition, finds no Android boot image header, and prints the message above.
 
-**Resolution**: Place `grubaa64.efi` and `grub.cfg` in the same directory as `BOOTAA64.EFI`. The `fs3:` handle in the signature above is part of the message format, not advice; the example below uses the Tier 2 §8 capture mapping (rescue USB = `fs4:`, target NVMe ESP = `fs2:`):
+**Resolution**: it depends on the configured boot mode. In GRUB mode, place `grubaa64.efi` and `grub.cfg` in the same directory as `BOOTAA64.EFI`—that is precisely where the launcher looks (`EFI\BOOT\grubaa64.efi`). In ExtLinux mode, restore `\boot\extlinux\extlinux.conf` on the ESP, or switch the boot mode (ESC Setup → L4T Boot Mode, or a `setvar L4TDefaultBootMode ...` write, subject to the NVRAM caveat below). Either way you can bypass the dispatch entirely by launching the staged binary by hand from the shell. The `fs3:` handle in the signature above is part of the message format, not advice; the example below uses the Tier 2 §8 capture mapping (rescue USB = `fs4:`, target NVMe ESP = `fs2:`):
 
 ```text
 Shell> cp fs4:\boot\grub\grub.cfg fs2:\EFI\BOOT\grub.cfg
@@ -403,9 +410,9 @@ The variables that govern recovery state live under NVIDIA's public vendor names
 
 | Variable | Attributes | Payload values | System behavior |
 |---|---|---|---|
-| `RootfsStatusSlotA` | NV, BS, RT | `0x00000000` = Normal, `0x000000FF` = Unbootable | Slot health flag. When `0xFF`, `L4tLauncher` skips the slot entirely. |
+| `RootfsStatusSlotA` | NV, BS, RT | `0x00000000` = Normal, `0x000000FF` = Unbootable | Slot health flag. When `0xFF`, `L4TLauncher` skips the slot entirely. |
 | `RootfsStatusSlotB` | NV, BS, RT | same as Slot A | Same semantics for A/B redundant rootfs layouts. |
-| `L4TDefaultBootMode` | NV, BS, RT | `0x00000000` GRUB, `0x00000001` ExtLinux (normal), `0x00000002` Direct partitions, `0x00000003` Recovery partition | Selects the kernel-loading mechanism. A recovery loop typically shows value `03`. |
+| `L4TDefaultBootMode` | NV, BS, RT | `0x00000000` boot GRUB, `0x00000001` normal kernel + DTB from the filesystem (ExtLinux), `0x00000002` normal kernel + DTB from partitions, `0x00000003` recovery kernel + DTB from partitions | Selects the boot mode `L4TLauncher` dispatches on; an absent or out-of-range value makes the launcher default to GRUB. A recovery loop typically shows value `03`. |
 | `BootChainFwNext` | NV, BS, RT | `0x00000000` Chain A, `0x00000001` Chain B | Overrides firmware boot-chain selection on the next boot (used by `nvbootctrl` during updates). |
 | `FmpCapsuleSinglePartitionChain` | NV, BS, RT | `0x00` Chain A, `0x01` Chain B | Targets which firmware chain a UEFI Capsule Update writes. |
 
@@ -503,19 +510,27 @@ When firmware faults, QSPI corruption, PKC signature asserts, or a dead bootload
 
 #### Host-Side Verification and Flashing
 
+> [!IMPORTANT]
+> **Required companion**: host-side flashing, artifact rebuilds, and on-target validation delegate to the `jetson-bsp-skills` repository (clone at `~/workspace/jetson-bsp-skills`, registered in the active profile's `skills.external_dirs`)—see `AGENTS.md` Rule 7 and §0 of the recovery skill for the hand-off table. The commands below remain as the reference invocation for running the step by hand, and they still follow Rule 1 (probe before write).
+
 The bootROM enumerates the board as a USB peripheral (no QSPI execution):
 
 ```bash
-lsusb | grep -i "NVIDIA Corp."
-# Expected: Bus 001 Device 015: ID 0955:7020 NVIDIA Corp. APX
+lsusb -d 0955:
+# Expected (Orin Nano 8 GB): Bus 001 Device 015: ID 0955:7523 NVIDIA Corp. APX
+# Product ID is module-specific: Orin Nano 4 GB = 0955:7623, Orin NX = 0955:7423,
+# AGX Orin = 0955:7023. Seeing 0955:7020 means L4T is running (device-mode gadget),
+# NOT recovery mode—re-enter RCM and check again before flashing.
 ```
 
-- **If APX enumerates**: the SoC and bootROM are alive—the fault is in QSPI/UEFI/OS layers, all recoverable by flashing. Repair QSPI while preserving the NVMe rootfs:
+- **If APX enumerates**: the SoC and bootROM are alive—the fault is in QSPI/UEFI/OS layers, all recoverable by flashing. Repair QSPI while preserving the NVMe rootfs (NVIDIA's documented "flash only QSPI on Jetson Orin series" invocation):
 
   ```bash
   cd ${JETPACK_PATH}/Linux_for_Tegra
-  sudo ./flash.sh --no-flash-rootfs jetson-orin-nano-devkit-super internal
+  sudo ./flash.sh --no-systemimg -c bootloader/generic/cfg/flash_t234_qspi.xml jetson-orin-nano-devkit-super internal
   ```
+
+  `flash_t234_qspi.xml` narrows the flash layout to the QSPI-NOR bootloader/UEFI partitions and `--no-systemimg` skips rootfs image creation, so nothing is written to the NVMe rootfs.
 
 - **If APX does not enumerate**: suspect carrier power sequencing, rail faults, or a physically blank QSPI—inspect power delivery before assuming flashable hardware. (Also note: JetPack 7.2.x flashing commands must name the `jetson-orin-nano-devkit-super` board config per the [Scope section](#scope-and-platform-baseline-jetpack-72x-only).)
 
@@ -540,7 +555,8 @@ setvar, shift, smbiosview, stall, tftp, time, timezone, touch, type,
 unload, ver, vol
 ```
 
-**Present beyond stock EDK2 Shell 2.2**: `acpiview`, `dp`, `ifconfig6`, `ping6`, `timezone`.  
+**Not in a default EDK2 shell binary**: `acpiview`, `dp`, `http`, `timezone`—profile-gated, dynamic, or vendor-supplied commands this build links in (`ifconfig6` and `ping6`, by contrast, ship with the standard network command library).
+
 **Absent compared to Debian builds**: `initrd` (an external Debian shell extension).
 
 #### Curated Recovery Commands Reference
@@ -569,13 +585,16 @@ The harness pattern, field-proven during the nano1 recovery:
 1. **Replicate the media byte-faithfully.** Build a sparse disk image containing the stick's exact bytes: protective MBR + GPT (primary and backup), the full ESP, and the ISO payload. Partial or regenerated replicas introduce their own variables.
 
    ```bash
-   dd if=/dev/sdX of=usb_replica.img bs=1M count=5400 conv=notrunc status=none
-   truncate -s 115G usb_replica.img   # restore full size so the backup GPT is addressable
+   # Copy the whole device: the backup GPT lives at the end of the disk, so a
+   # short count= copy followed by truncate would leave it zeroed in the replica.
+   # conv=sparse keeps the file small without changing a single logical byte.
+   dd if=/dev/sdX of=usb_replica.img bs=1M conv=sparse status=progress
    ```
 
 2. **Boot it under AAVMF as a USB device.** AAVMF is Debian's TianoCore EDK2 build for AArch64, the same firmware code family as Jetson's QSPI UEFI:
 
    ```bash
+   cp /usr/share/AAVMF/AAVMF_VARS.fd AAVMF_VARS_test.fd   # pflash VARS store must be writable and per-test
    qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1024 -nographic \
      -drive if=pflash,format=raw,readonly=on,file=/usr/share/AAVMF/AAVMF_CODE.fd \
      -drive if=pflash,format=raw,file=AAVMF_VARS_test.fd \
@@ -590,7 +609,7 @@ The harness pattern, field-proven during the nano1 recovery:
 The emulator substitutes the firmware but replicates the media. This makes AAVMF results **asymmetric**:
 
 - **A failure at the GRUB layer is diagnostic for the Jetson.** GRUB parse/exec semantics are firmware-family-identical (both Jetson UEFI and AAVMF are TianoCore EDK2; GRUB 2.12 is GRUB 2.12). A config that produces `error: syntax error` cascades under AAVMF will fail the same way on the board.
-- **A success proves only the GRUB layer.** It says nothing about the layers AAVMF does not contain: NVIDIA `L4tLauncher` probe order, Tegra USB/NVMe enumeration and `fsN:` handle numbering, QSPI/NVRAM state (slot flags, `COMPATIBLE_SPEC`, capsule behavior), or Ext4Dxe parsing the ext4 rootfs. Never conclude "boots in QEMU, safe to flash" without the final step.
+- **A success proves only the GRUB layer.** It says nothing about the layers AAVMF does not contain: NVIDIA `L4TLauncher` probe order, Tegra USB/NVMe enumeration and `fsN:` handle numbering, QSPI/NVRAM state (slot flags, `COMPATIBLE_SPEC`, capsule behavior), or Ext4Dxe parsing the ext4 rootfs. Never conclude "boots in QEMU, safe to flash" without the final step.
 
 Therefore: reproduce failures on the bench, fix them, re-verify, **then transfer-validate once on real hardware before trusting the stick in the field.**
 
