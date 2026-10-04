@@ -50,29 +50,33 @@ Shell> map
 ```
 *Note: `FSx:` are readable FAT partitions; `BLKx:` are raw block devices or unreadable filesystems (such as ext4 or ISO9660).*
 
+**Handle numbers are not stable.** Every command below uses this repository's declared example mapping: rescue USB = `fs4:`, NVMe ESP = `fs2:` (tutorial Tier 2 §8 capture). Read your own handles from the `map -r` device paths (`USB(...)` versus `NVMe(...)`) and substitute them everywhere.
+
 ### 2. Auto-Recovery or Probe
-If using a USB rescue stick prepared with this toolkit, run:
+If using a USB rescue stick prepared with this toolkit, run (example mapping: rescue USB = `fs4:`):
 ```text
-Shell> fs0:\startup.nsh
+Shell> fs4:\startup.nsh
 ```
+`startup.nsh` refreshes the mappings and reports `\EFI\BOOT\BOOTAA64.EFI` hits on `fs0:` through `fs3:`. It never launches a binary, so boot by hand with the handle your own `map -r` showed.
+
 Or probe which of the 71 standard UEFI commands are compiled into your specific firmware build:
 ```text
-Shell> fs0:\probe_uefi_shell.nsh
+Shell> fs4:\probe_uefi_shell.nsh
 ```
 
 ### 3. Stage GRUB Next to Failing L4TLauncher
-If `L4TLauncher` fails with *"Android image header not seen"* or fails to locate its configuration on ISO9660:
+If `L4TLauncher` fails with *"Android image header not seen"* or fails to locate its configuration on ISO9660 (example mapping: rescue USB = `fs4:`, target NVMe ESP = `fs2:`):
 ```text
-Shell> fs0:\stage-grub.nsh fs1: fs3:
-Shell> fs3:
+Shell> fs4:\stage-grub.nsh fs4: fs2:
+Shell> fs2:
 Shell> cd \EFI\BOOT
 Shell> grubaa64.efi
 ```
 
 ### 4. Direct Kernel Execution (EFI Stub)
-If the bootloader itself is corrupted, execute the Linux kernel directly:
+If the bootloader itself is corrupted, execute the Linux kernel directly (example mapping: rescue USB = `fs4:`, filesystem holding kernel and initrd = `fs2:`):
 ```text
-Shell> fs0:\boot-kernel-stub.nsh fs2: PARTUUID=<your-rootfs-uuid>
+Shell> fs4:\boot-kernel-stub.nsh fs2: PARTUUID=<your-rootfs-uuid>
 ```
 
 ---
