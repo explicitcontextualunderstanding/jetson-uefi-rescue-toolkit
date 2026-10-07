@@ -1,6 +1,6 @@
 ---
 name: jetson-uefi-recovery
-description: Jetson Orin Nano / NX UEFI recovery runbooks (JetPack 7.2.x / L4T r39.2.x scope), read-only diagnostic ladders, and automated error-signature remedies for the unified ISO installer era. Diagnoses here and hands every flash, rebuild, and on-target step to the jetson-bsp-skills pipeline.
+description: "Fix unbootable Jetson boots: UEFI Shell, NVRAM, ESP, ISO recovery. Diagnoses here and hands every flash, rebuild, and on-target step to the jetson-bsp-skills pipeline (JetPack 7.2.x / L4T r39.2.x scope)."
 ---
 
 # Jetson UEFI Recovery Skill
@@ -25,6 +25,7 @@ This skill owns **diagnosis and UEFI-side fixes**: the read-only ladder, the Sig
 | The complete BSP release, not only the firmware image | `/jetson-download-bsp` | Stages the BSP tarball, sample rootfs, `public_sources`, x-tools, and guides at the paths `init-image` / `init-source` expect. Recipe D below keeps the light path. |
 | Host-side release or board-config sanity | `/jetson-print-bsp-info` | Read-only summary of a `Linux_for_Tegra/` root: L4T version, board configs, rootfs-populated proxy. |
 | Matching kernel, initrd, or DTB artifacts | `/jetson-build-source` → `/jetson-promote-image` → `/jetson-flash-image` → `/jetson-validate-image` | Enter through `/jetson-quick-start` first when the workspace has no active profile. |
+| Validating rescue media before use (structural checks, PE headers, QEMU/AAVMF bench) | `jetson-rescue-media-validate` (same directory) | It owns the scoring rules: ghost-device exit `2`, zero `[FAIL]` for a structural pass, the PE scanner's missing exit-code contract, and the bench PASS criteria. This skill keeps only the failure routing (Signature 2 and Signature 4). |
 
 Hand-offs are one-way and evidence-led: gather the discriminator here (Tier 0 row → Signature match), dispatch the state-changing leg, then verify the outcome back in this skill—UEFI banner version, `RootfsStatusSlotA`, and a boot that reaches `Shell>` or Ubuntu.
 
@@ -61,6 +62,7 @@ Verify:
 # Verify PE32+ machine type on the ESP partition (must be 0xAA64 / AArch64)
 sudo python3 host/check_esp_pe_binaries.py "${DEV}1"
 ```
+*Score this output with `jetson-rescue-media-validate` Step 2: the scanner exits `0` on success and on total failure alike, so only the printed `Machine=AArch64 (0xaa64)` lines count.*
 
 ---
 
@@ -139,6 +141,7 @@ sudo python3 host/check_esp_pe_binaries.py "${DEV}1"
 ## 3. Fast-Path Recipes
 
 ### Recipe A: Full Pre-Flight Drive Verification
+Owned by `jetson-rescue-media-validate` (Steps 0-2), which carries the scoring rules: ghost-device exit `2`, zero `[FAIL]` for a structural pass, and the PE scan caveat. From the repository root:
 ```bash
 sudo ./host/uefi_boot_verifier.sh /dev/sdX
 ```

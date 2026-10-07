@@ -1,6 +1,6 @@
 ---
 name: jetson-rescue-media-validate
-description: Validate a Jetson UEFI rescue boot stick before use.
+description: "Validate Jetson rescue USB media: FAT32, PE, QEMU boot."
 version: 0.1.0
 license: Apache-2.0
 platforms: [linux, macos]
