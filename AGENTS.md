@@ -68,7 +68,7 @@ When asked to diagnose or resolve a boot failure, select tools according to this
 | **FAT32 start-cluster (+2 offset) bug** | `host/fix_esp_dir_clusters.py` | Workstation |
 | **Creating compliant rescue ESP** | `host/stage-fat-esp.sh` | Workstation |
 | **Binary architecture verification** | `host/check_esp_pe_binaries.py` | Workstation |
-| **Bench boot-validation of rescue media** | qemu-system-aarch64 + AAVMF (Recipe F in .agents/skills/jetson-uefi-recovery/SKILL.md) | Workstation (Linux/macOS, QEMU + AAVMF installed) |
+| **Bench boot-validation of rescue media** | qemu-system-aarch64 + AAVMF (Recipe F in .agents/skills/jetson/jetson-uefi-recovery/SKILL.md) | Workstation (Linux/macOS, QEMU + AAVMF installed) |
 | **Scope + failure-layer orientation before any recovery** | docs/uefi-rescue-shell-tutorial.md Tier 0 matrix | Any (read-first) |
 | **Shell command inventory discovery** | `nsh/probe_uefi_shell.nsh` | Jetson UEFI Shell (`Shell>`) |
 | **Mapping refresh + `BOOTAA64.EFI` probe (reports hits; boot is manual)** | `nsh/startup.nsh` | Jetson UEFI Shell (`Shell>`) |

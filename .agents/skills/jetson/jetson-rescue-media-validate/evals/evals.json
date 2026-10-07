@@ -6,7 +6,7 @@
     "expected_script": "host/uefi_boot_verifier.sh",
     "ground_truth": "Load jetson-rescue-media-validate and run its Steps 0-2 in order: lsblk size check (ghost guard), sudo ./host/uefi_boot_verifier.sh /dev/sdX scored on the trailing === RESULT === block needing zero [FAIL] lines and exit 0, then sudo python3 ./host/check_esp_pe_binaries.py /dev/sdX1 confirming every PE hit prints Machine=AArch64 (0xaa64). Structural checks are necessary but not sufficient; say plainly that the bench gate and a hardware boot are still outstanding. Do not repair anything.",
     "expected_behavior": [
-      "Read .agents/skills/jetson-rescue-media-validate/SKILL.md",
+      "Read .agents/skills/jetson/jetson-rescue-media-validate/SKILL.md",
       "Confirm the device node reports non-zero size before trusting any output (verifier exit 2 means ghost device, not corruption)",
       "Present sudo commands in a fenced block for the user to run; never ask for or relay a sudo password",
       "Score the verifier by its === RESULT === block: zero [FAIL] lines and exit 0 pass, [WARN] is advisory",
@@ -21,7 +21,7 @@
     "expected_script": null,
     "ground_truth": "Run the bench gate from Step 4: full-device dd if=/dev/sdX of=usb_replica.img bs=1M conv=sparse (never a short count= copy plus truncate, which zeroes the backup GPT), cp /usr/share/AAVMF/AAVMF_VARS.fd AAVMF_VARS_test.fd for a writable pflash VARS store, then qemu-system-aarch64 -M virt with AAVMF_CODE.fd plus usb-storage. PASS requires BOTH the GRUB menu entry AND Linux version on the emulated console; menu-only or parse errors fail. State the asymmetric-validity rule: a GRUB-layer failure is diagnostic for the Jetson, a success proves only the GRUB layer, so a real-hardware transfer boot (Step 5) is still required before field-ready.",
     "expected_behavior": [
-      "Read .agents/skills/jetson-rescue-media-validate/SKILL.md Steps 4 and 5",
+      "Read .agents/skills/jetson/jetson-rescue-media-validate/SKILL.md Steps 4 and 5",
       "Replicate the whole device so the backup GPT survives, and stage a per-test AAVMF_VARS_test.fd",
       "Score strictly: GRUB entry visible AND Linux version reached, else FAIL",
       "Explain the asymmetric validity rule instead of promising the media is safe",
@@ -35,7 +35,7 @@
     "expected_script": "host/check_esp_pe_binaries.py",
     "ground_truth": "No. The scanner has no exit-code contract: it returns 0 both when it finds PE headers and when it finds none, so exit status carries no signal. Score the printed output instead: one or more PE Binary at offset 0x... lines must read Machine=AArch64 (0xaa64), and the line 'No valid PE headers found in first 50MB' is a hard failure. Then route the failure to jetson-uefi-recovery (Signature 2/4) rather than repairing inside this skill.",
     "expected_behavior": [
-      "Read .agents/skills/jetson-rescue-media-validate/SKILL.md Pitfalls and Step 2",
+      "Read .agents/skills/jetson/jetson-rescue-media-validate/SKILL.md Pitfalls and Step 2",
       "State explicitly that the script's exit code is not a pass/fail signal",
       "Define pass as all PE hits reporting AArch64 (0xaa64) with no 'No valid PE headers' line",
       "Route any failure to the named signature in jetson-uefi-recovery instead of guessing"
@@ -48,7 +48,7 @@
     "expected_script": "host/uefi_boot_verifier.sh",
     "ground_truth": "A 0-byte node is a ghost device, not corruption. uefi_boot_verifier.sh exits 2 with the message 'A 0-byte ghost is NOT a corrupt stick' when lsblk reports size 0 or empty, precisely so false corruption verdicts are not issued against an ejected or vanished stick. The fix is physical: re-insert the stick (or re-enumerate), re-run lsblk -dn -o SIZE -b, and only continue when the size is non-zero. No mkfs, no dd, no re-partitioning.",
     "expected_behavior": [
-      "Read .agents/skills/jetson-rescue-media-validate/SKILL.md Step 0 and Pitfalls",
+      "Read .agents/skills/jetson/jetson-rescue-media-validate/SKILL.md Step 0 and Pitfalls",
       "Identify exit 2 as the ghost-device guard, explicitly not media corruption",
       "Instruct a physical re-insert and re-probe of lsblk -dn -o SIZE -b /dev/sdX",
       "Refuse destructive repair commands (mkfs, dd, partitioning) for a 0-byte node"

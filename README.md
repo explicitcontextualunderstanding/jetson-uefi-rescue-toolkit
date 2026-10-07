@@ -14,7 +14,7 @@ This toolkit **requires** the [jetson-bsp-skills](https://github.com/NVIDIA-AI-I
 
 - **Clone**: `~/workspace/jetson-bsp-skills` (upstream `https://github.com/NVIDIA-AI-IOT/jetson-bsp-skills.git`).
 - **Registration**: `~/.hermes/profiles/jetson/config.yaml` → `skills.external_dirs` → `/home/amazon1148/workspace/jetson-bsp-skills/skills`, which exposes the 24 `jetson-*` skills (Setup → Customize → Build → Deploy).
-- **Split of work**: this repository diagnoses (Tier 0 triage, UEFI-shell and NVRAM fixes, media forensics); the companion executes the write legs through `/jetson-flash-image`, `/jetson-build-source`, `/jetson-promote-image`, and `/jetson-validate-image`. The hand-off table lives in [`.agents/skills/jetson-uefi-recovery/SKILL.md`](.agents/skills/jetson-uefi-recovery/SKILL.md) §0 and in [`AGENTS.md`](AGENTS.md) Rule 7.
+- **Split of work**: this repository diagnoses (Tier 0 triage, UEFI-shell and NVRAM fixes, media forensics); the companion executes the write legs through `/jetson-flash-image`, `/jetson-build-source`, `/jetson-promote-image`, and `/jetson-validate-image`. The hand-off table lives in [`.agents/skills/jetson/jetson-uefi-recovery/SKILL.md`](.agents/skills/jetson/jetson-uefi-recovery/SKILL.md) §0 and in [`AGENTS.md`](AGENTS.md) Rule 7.
 - **When either piece is missing**: restore the clone and the `external_dirs` entry before starting a recovery that needs a flash. `AGENTS.md` Rule 7 forbids substituting a hand-copied command from memory.
 
 ---
@@ -28,7 +28,7 @@ This repository is structured for both human engineers and autonomous AI agents:
 - **For Foundational Principles:** [**`docs/first-principles.md`**](docs/first-principles.md)—Seven architectural invariants, failure boundaries, and diagnostic reasoning models derived from empirical recovery receipts.
 - **For Source Grounding & Verification:** [**`docs/references.md`**](docs/references.md)—Categorized external references (official NVIDIA documentation, EDK2 source repositories, engineering analysis and field guides) grounding the tutorial's firmware architecture and recovery procedures.
 - **For AI Agents & Collaborators:** [**`AGENTS.md`**](AGENTS.md)—Operational directives, system boundaries, and safety invariant rules (such as non-destructive probing before writes).
-- **For Agent Frameworks:** [**`.agents/skills/jetson-uefi-recovery/SKILL.md`**](.agents/skills/jetson-uefi-recovery/SKILL.md)—Modular, executable runbook recipes and error-signature decision trees.
+- **For Agent Frameworks:** [**`.agents/skills/jetson/jetson-uefi-recovery/SKILL.md`**](.agents/skills/jetson/jetson-uefi-recovery/SKILL.md)—Modular, executable runbook recipes and error-signature decision trees.
 
 ---
 
@@ -156,7 +156,7 @@ Documentation in this repository is strictly linted using **Vale** against Googl
 Run Vale across repository documentation:
 
 ```bash
-vale docs/uefi-rescue-shell-tutorial.md README.md AGENTS.md .agents/skills/jetson-uefi-recovery/SKILL.md
+vale docs/uefi-rescue-shell-tutorial.md README.md AGENTS.md .agents/skills/jetson/*/SKILL.md
 ```
 
 ---
